@@ -35,3 +35,35 @@ export interface DivergencePoint {
   divergence: number;
   logDivergence: number;
 }
+
+export interface ToolCallLog {
+  tool_name: string;
+  status: string;
+  description: string;
+  result_summary: string;
+}
+
+export interface PhysicsDiagnostics {
+  total_energy: number;
+  kinetic_energy: number;
+  potential_energy: number;
+  angular_momentum: number;
+  chaos_horizon_time: number;
+  stability_classification: string;
+}
+
+export interface CopilotResponsePayload {
+  success: boolean;
+  system_name: string;
+  description: string;
+  masses: [number, number, number];
+  pos_a: [Vector3D, Vector3D, Vector3D];
+  vel_a: [Vector3D, Vector3D, Vector3D];
+  body_colors: [string, string, string];
+  recommended_dt: number;
+  recommended_sub_steps: number;
+  recommended_perturbation: number;
+  diagnostics: PhysicsDiagnostics;
+  tool_logs: ToolCallLog[];
+}
+

@@ -2,13 +2,14 @@
 
 import React, { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { CameraTargetMode, DivergencePoint, Vector3D } from '@/types/physics';
+import { CameraTargetMode, DivergencePoint, Vector3D, CopilotResponsePayload } from '@/types/physics';
 import { PRESETS } from '@/utils/presets';
 import { Header } from '@/components/ui/Header';
 import { ControlPanel } from '@/components/ui/ControlPanel';
 import { AnalyticsDrawer } from '@/components/ui/AnalyticsDrawer';
 import { GuideModal } from '@/components/ui/GuideModal';
 import { TourOverlay } from '@/components/ui/TourOverlay';
+import { CopilotDrawer } from '@/components/ui/CopilotDrawer';
 
 // Dynamically import Canvas to bypass SSR issues with WebGL/Three.js
 const SimulationCanvas = dynamic(
@@ -45,9 +46,10 @@ export default function Home() {
     { ...defaultPreset.velA[2] },
   ]);
 
-  // Modals & Tour State
+  // Modals & Copilot State
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState<boolean>(false);
 
   // Telemetry Metrics
   const [fps, setFps] = useState<number>(60);
@@ -77,6 +79,36 @@ export default function Home() {
     if (preset.bodyColors) {
       setBodyColors([...preset.bodyColors]);
     }
+    setMetricsHistory([]);
+    setElapsedTime(0);
+    setResetTrigger((prev) => prev + 1);
+  };
+
+  // Agentic Copilot Payload Injection Handler
+  const handleApplyCopilotPayload = (payload: CopilotResponsePayload) => {
+    // Register custom dynamic preset in PRESETS map
+    PRESETS['aiCustom'] = {
+      id: 'aiCustom',
+      name: payload.system_name,
+      description: payload.description,
+      gConst: 1.0,
+      softening: 0.005,
+      defaultDt: payload.recommended_dt || 0.008,
+      defaultSubSteps: payload.recommended_sub_steps || 20,
+      masses: [...payload.masses],
+      posA: [...payload.pos_a],
+      velA: [...payload.vel_a],
+      bodyColors: [...payload.body_colors]
+    };
+
+    setPresetKey('aiCustom');
+    setMasses([...payload.masses]);
+    setBodyColors([...payload.body_colors]);
+    setPosA([...payload.pos_a]);
+    setVelA([...payload.vel_a]);
+    setPerturbation(payload.recommended_perturbation || 1e-7);
+    setDt(payload.recommended_dt || 0.008);
+    setSubSteps(payload.recommended_sub_steps || 20);
     setMetricsHistory([]);
     setElapsedTime(0);
     setResetTrigger((prev) => prev + 1);
@@ -201,6 +233,7 @@ export default function Home() {
         elapsedTime={elapsedTime}
         onOpenGuide={() => setIsGuideOpen(true)}
         onStartTour={() => setIsTourOpen(true)}
+        onOpenCopilot={() => setIsCopilotOpen(true)}
       />
 
       {/* Control Panel Sidebar */}
@@ -243,6 +276,13 @@ export default function Home() {
       <AnalyticsDrawer
         metricsHistory={metricsHistory}
         currentDivergence={currentDivergence}
+      />
+
+      {/* Interactive Agentic Physics Copilot Drawer */}
+      <CopilotDrawer
+        isOpen={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
+        onApplyCopilotPayload={handleApplyCopilotPayload}
       />
 
       {/* Interactive Physics & Chaos Educational Modal */}
