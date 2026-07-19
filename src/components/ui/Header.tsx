@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Cpu, Zap, Activity, AlertTriangle, BookOpen, Github, User, Compass } from 'lucide-react';
+import { Cpu, Zap, Activity, AlertTriangle, BookOpen, Github, User, Compass, Bot } from 'lucide-react';
 
 interface HeaderProps {
   fps: number;
@@ -10,6 +10,7 @@ interface HeaderProps {
   elapsedTime: number;
   onOpenGuide: () => void;
   onStartTour: () => void;
+  onOpenCopilot: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   elapsedTime,
   onOpenGuide,
   onStartTour,
+  onOpenCopilot,
 }) => {
   const isDivergent = divergence > 0.5;
 
@@ -48,15 +50,24 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Buttons & Badges */}
       <div className="flex items-center gap-1.5 sm:gap-3 font-mono text-xs">
+        {/* Agentic AI Copilot Button */}
+        <button
+          onClick={onOpenCopilot}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-pink-500 text-white font-bold text-xs hover:opacity-90 transition-all shadow-lg shadow-cyan-500/25 animate-pulse"
+          title="Open Agentic AI Celestial Copilot"
+        >
+          <Bot className="w-4 h-4 text-cyan-200" />
+          <span className="font-sans font-bold">AI Copilot</span>
+        </button>
+
         {/* Onboarding Tour Button */}
         <button
           onClick={onStartTour}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-pink-500 text-white font-semibold text-xs hover:opacity-90 transition-all shadow-md shadow-cyan-500/20"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-space-800/90 border border-slate-700/60 text-slate-200 font-semibold text-xs hover:border-cyan-400 hover:text-cyan-300 transition-all"
           title="Start Interactive UI Tour"
         >
-          <Compass className="w-3.5 h-3.5" />
-          <span className="font-sans hidden sm:inline">Get Started Tour</span>
-          <span className="font-sans sm:hidden">Tour</span>
+          <Compass className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="font-sans hidden sm:inline">Tour</span>
         </button>
 
         {/* Physics Guide Button */}
