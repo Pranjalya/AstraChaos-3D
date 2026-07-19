@@ -11,7 +11,8 @@ def test_llm_agent_initialization(copilot_agent):
     """Verify agent detects NVIDIA API key and initializes client."""
     if copilot_agent.api_key:
         assert copilot_agent.client is not None
-        assert copilot_agent.model == "z-ai/glm-5.2"
+        assert copilot_agent.model == "openai/gpt-oss-20b"
+
 
 
 
@@ -43,4 +44,5 @@ def test_llm_agent_generate_orbit_real_call(copilot_agent):
     assert "compute_physics_diagnostics" in tool_names
     
     if copilot_agent.client:
-        assert "nvidia_nemotron_llm_reasoning" in tool_names
+        assert "astrophysics_llm_reasoning" in tool_names
+

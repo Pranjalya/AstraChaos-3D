@@ -105,13 +105,15 @@ def compute_physics_diagnostics(
 
 def synthesize_orbital_topology(
     prompt: str,
-    perturbation: float = 1e-7
+    perturbation: float = 1e-7,
+    custom_params: Dict[str, Any] = None
 ) -> Dict[str, Any]:
     """
     Parses user prompt keywords to generate celestial state vectors, 
-    masses, and visual themes.
+    masses, and visual themes, with optional dynamic parameter overrides.
     """
     prompt_lower = prompt.lower()
+
     
     tool_logs: List[ToolCallLog] = [
         ToolCallLog(
@@ -269,6 +271,39 @@ def synthesize_orbital_topology(
             Vector3D(x=0.3, y=0.1, z=0.1)
         ]
 
+    # Dynamic parameter overrides from LLM parameter extraction
+    if custom_params:
+        override_summary = []
+        if "custom_masses" in custom_params and isinstance(custom_params["custom_masses"], list) and len(custom_params["custom_masses"]) == 3:
+            try:
+                m_list = [float(m) for m in custom_params["custom_masses"] if float(m) > 0]
+                if len(m_list) == 3:
+                    masses = m_list
+                    override_summary.append(f"Masses override: {masses}")
+            except Exception:
+                pass
+
+        if "spatial_scale" in custom_params and isinstance(custom_params["spatial_scale"], (int, float)) and custom_params["spatial_scale"] > 0:
+            scale = float(custom_params["spatial_scale"])
+            if scale != 1.0:
+                pos = [Vector3D(x=p.x * scale, y=p.y * scale, z=p.z * scale) for p in pos]
+                override_summary.append(f"Spatial scale: {scale}x")
+
+        if "velocity_multiplier" in custom_params and isinstance(custom_params["velocity_multiplier"], (int, float)) and custom_params["velocity_multiplier"] > 0:
+            v_mult = float(custom_params["velocity_multiplier"])
+            if v_mult != 1.0:
+                vel = [Vector3D(x=v.x * v_mult, y=v.y * v_mult, z=v.z * v_mult) for v in vel]
+                override_summary.append(f"Velocity boost: {v_mult}x")
+
+        if override_summary:
+            tool_logs.append(
+                ToolCallLog(
+                    tool_name="extract_dynamic_parameters",
+                    status="SUCCESS",
+                    description="Extracted dynamic physical parameters from natural language prompt",
+                    result_summary=" | ".join(override_summary)
+                )
+            )
 
     # Tool Call 2: Normalize Center of Mass & Momentum
     tool_logs.append(
@@ -279,6 +314,7 @@ def synthesize_orbital_topology(
             result_summary=f"Synthesized state vectors for '{system_name}' with mass ratio {masses[0]}:{masses[1]}:{masses[2]}"
         )
     )
+
 
     pos_norm, vel_norm = normalize_center_of_mass(masses, pos, vel)
     

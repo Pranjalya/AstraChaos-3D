@@ -235,11 +235,14 @@ export const CopilotDrawer: React.FC<CopilotDrawerProps> = ({
                         <span className="text-cyan-400 font-semibold text-[11px] flex items-center gap-1">
                           🔧 <code className="bg-cyan-950/60 px-1.5 py-0.5 rounded text-cyan-300">{log.tool_name}()</code>
                         </span>
-                        <span className={`text-[9px] uppercase px-1.5 py-0.2 rounded font-bold ${
-                          log.status === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
+                        <span className={`text-[9px] uppercase px-1.5 py-0.5 rounded font-bold border ${
+                          log.status === 'SUCCESS'
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                            : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
                         }`}>
-                          {log.status}
+                          {log.status === 'LOCAL_SOLVER' || log.status === 'FALLBACK' ? 'OFFLINE SOLVER' : log.status}
                         </span>
+
                       </div>
                       <p className="text-[11px] text-slate-300 pl-4 border-l-2 border-cyan-500/30">
                         {log.description}

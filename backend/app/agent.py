@@ -11,7 +11,7 @@ load_dotenv()
 class CelestialCopilotAgent:
     def __init__(self):
         self.api_key = os.getenv("NVIDIA_API_KEY")
-        self.model = "z-ai/glm-5.2" # nvidia/nemotron-3-nano-30b-a3b
+        self.model = "openai/gpt-oss-20b"
         self.client = None
         if self.api_key:
             try:
@@ -24,63 +24,80 @@ class CelestialCopilotAgent:
 
     def generate_orbit(self, request: CopilotRequest) -> CopilotResponse:
         """
-        Orchestrates LLM intent analysis, tool calls, physics calculations, 
-        and returns a complete CopilotResponse payload.
+        Orchestrates LLM dynamic tool parameter parsing, orbital synthesis, 
+        physics calculations, and returns a complete CopilotResponse payload.
         """
-        # 1. Base synthesis via orbital mechanics tool
-        topology = synthesize_orbital_topology(request.prompt, request.perturbation)
-        
-        # 2. If NVIDIA API key is available, enhance with Nemotron LLM insights
-        llm_enhanced_desc = topology["description"]
-        llm_system_name = topology["system_name"]
+        custom_params = None
+        llm_enhanced_desc = None
 
+        # 1. Attempt dynamic LLM parameter extraction via openai/gpt-oss-20b
         if self.client:
             try:
-                prompt_messages = [
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are AstraChaos Agentic Celestial Copilot, an expert AI astrophysics engine. "
-                            "Analyze the user's prompt about three-body gravitational dynamics and provide a concise, "
-                            "compelling 2-sentence astrophysics breakdown describing the system dynamics, chaos horizon, "
-                            "and gravitational resonance."
-                        )
-                    },
-                    {
-                        "role": "user",
-                        "content": f"User Prompt: '{request.prompt}'. System Type: '{topology['system_name']}'. Mass Ratio: {topology['masses']}."
-                    }
-                ]
-                
+                sys_msg = (
+                    "You are AstraChaos Agentic Physics Tool Call Parser. "
+                    "Extract custom physical parameters and astrophysics summary from user query into JSON:\n"
+                    "{\n"
+                    '  "custom_masses": [m1, m2, m3] or null,\n'
+                    '  "spatial_scale": float or 1.0,\n'
+                    '  "velocity_multiplier": float or 1.0,\n'
+                    '  "astrophysics_summary": "2-sentence astrophysics breakdown of system dynamics and chaos horizon"\n'
+                    "}\n"
+                    "Output ONLY valid raw JSON."
+                )
+
                 completion = self.client.chat.completions.create(
                     model=self.model,
-                    messages=prompt_messages,
-                    temperature=0.7,
-                    max_tokens=300,
+                    messages=[
+                        {"role": "system", "content": sys_msg},
+                        {"role": "user", "content": request.prompt}
+                    ],
+                    temperature=0.1,
+                    max_tokens=220,
                     timeout=8.0
                 )
 
-                
                 if completion.choices and completion.choices[0].message.content:
-                    llm_enhanced_desc = completion.choices[0].message.content.strip()
+                    raw_json = completion.choices[0].message.content.strip()
+                    # Clean markdown codeblocks if present
+                    if "```" in raw_json:
+                        raw_json = raw_json.split("```")[1].replace("json", "").strip()
                     
-                topology["tool_logs"].append(
-                    ToolCallLog(
-                        tool_name="nvidia_nemotron_llm_reasoning",
-                        status="SUCCESS",
-                        description=f"Invoiced NVIDIA Nemotron ({self.model}) for agentic astrophysics reasoning",
-                        result_summary=f"Synthesized astrophysicist report: '{llm_enhanced_desc[:60]}...'"
-                    )
-                )
+                    parsed = json.loads(raw_json)
+                    custom_params = parsed
+                    if "astrophysics_summary" in parsed and parsed["astrophysics_summary"]:
+                        llm_enhanced_desc = parsed["astrophysics_summary"].strip()
+
             except Exception as e:
-                topology["tool_logs"].append(
-                    ToolCallLog(
-                        tool_name="nvidia_nemotron_llm_reasoning",
-                        status="FALLBACK",
-                        description=f"LLM API call fallback: {str(e)[:40]}",
-                        result_summary="Utilized local deterministic astronomical generator"
-                    )
+                print(f"[Copilot LLM Parse Warning]: {e}")
+
+        # 2. Base synthesis via orbital mechanics tool (with optional dynamic parameters)
+        topology = synthesize_orbital_topology(request.prompt, request.perturbation, custom_params=custom_params)
+
+        if not llm_enhanced_desc:
+            llm_enhanced_desc = topology["description"]
+        llm_system_name = topology["system_name"]
+
+        # Append LLM reasoning trace log
+        if self.client and custom_params:
+            topology["tool_logs"].append(
+                ToolCallLog(
+                    tool_name="astrophysics_llm_reasoning",
+                    status="SUCCESS",
+                    description=f"Invoiced NVIDIA API ({self.model}) for agentic parameter extraction & astrophysics reasoning",
+                    result_summary=f"Synthesized report: '{llm_enhanced_desc[:60]}...'"
                 )
+            )
+        else:
+            topology["tool_logs"].append(
+                ToolCallLog(
+                    tool_name="astrophysics_llm_reasoning",
+                    status="LOCAL_SOLVER",
+                    description="Utilized deterministic astronomical physics solver",
+                    result_summary="Generated orbital mechanics state vectors and diagnostic metrics"
+                )
+            )
+
+
 
         return CopilotResponse(
             success=True,

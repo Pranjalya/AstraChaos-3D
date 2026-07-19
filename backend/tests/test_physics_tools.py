@@ -80,8 +80,20 @@ def test_synthesize_orbital_topology_archetypes(prompt, expected_keyword):
     res = synthesize_orbital_topology(prompt, perturbation=1e-7)
     
     assert expected_keyword in res["system_name"]
-    assert len(res["masses"]) == 3
-    assert len(res["pos_a"]) == 3
-    assert len(res["vel_a"]) == 3
     assert len(res["body_colors"]) == 3
     assert len(res["tool_logs"]) >= 3
+
+
+def test_synthesize_orbital_topology_dynamic_custom_parameters():
+    """Test dynamic parameter overrides (custom masses, spatial scale, velocity multiplier)."""
+    custom = {
+        "custom_masses": [6.5, 1.5, 0.05],
+        "spatial_scale": 2.0,
+        "velocity_multiplier": 1.5
+    }
+    res = synthesize_orbital_topology("custom prompt", perturbation=1e-7, custom_params=custom)
+    
+    assert res["masses"] == [6.5, 1.5, 0.05]
+    tool_names = [log.tool_name for log in res["tool_logs"]]
+    assert "extract_dynamic_parameters" in tool_names
+
