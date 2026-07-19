@@ -62,19 +62,19 @@ graph TD
         
         Agent --> T1
         Agent --> T2
-        T2 -->|Position & Velocity Vectors| T3
-        T3 -->|Shift COM to (0,0,0) & Momentum P=0| T4
-        T4 -->|Energy E=T+V, Angular Momentum |L|, Chaos Horizon| Agent
+        T2 -->|"Position & Velocity Vectors"| T3
+        T3 -->|"Shift COM to Origin & Balance Momentum P=0"| T4
+        T4 -->|"Energy E=T+V, Angular Momentum L, Chaos Horizon"| Agent
 
         subgraph ExternalLLM ["NVIDIA API Platform"]
             LLMModel["NVIDIA LLM (z-ai/glm-5.2)"]
         end
 
-        Agent -->|OpenAI SDK API Call| LLMModel
-        LLMModel -->|Astrophysicist Reasoning Report| Agent
+        Agent -->|"OpenAI SDK API Call"| LLMModel
+        LLMModel -->|"Astrophysicist Reasoning Report"| Agent
     end
 
-    Agent -->|Structured CopilotResponse Payload| ClientAPI
+    Agent -->|"Structured CopilotResponse Payload"| ClientAPI
 ```
 
 ---
