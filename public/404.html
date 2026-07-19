@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AstraChaos 3D — Redirecting...</title>
+  <script>
+    (function () {
+      var path = window.location.pathname;
+      var lowerPath = path.toLowerCase();
+      // Auto-redirect mis-cased path (e.g. /astrachaos-3d) to standard /AstraChaos-3D/
+      if (lowerPath.indexOf('/astrachaos-3d') !== -1) {
+        var subPath = path.substring(lowerPath.indexOf('/astrachaos-3d') + 14);
+        var targetUrl = '/AstraChaos-3D' + subPath + window.location.search + window.location.hash;
+        window.location.replace(targetUrl);
+      } else {
+        window.location.replace('/AstraChaos-3D/');
+      }
+    })();
+  </script>
+</head>
+<body style="background:#05070f; color:#00f3ff; font-family:system-ui, sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; text-align:center;">
+  <div style="font-size:3rem; margin-bottom:1rem;">🦋</div>
+  <h2 style="margin:0; font-size:1.25rem;">AstraChaos 3D</h2>
+  <p style="color:#94a3b8; font-size:0.875rem; margin-top:0.5rem;">Redirecting to celestial sandbox...</p>
+</body>
+</html>
