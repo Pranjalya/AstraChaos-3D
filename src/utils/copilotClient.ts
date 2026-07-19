@@ -1,6 +1,7 @@
 import { CopilotResponsePayload, Vector3D, PhysicsDiagnostics, ToolCallLog } from '@/types/physics';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://astrachaos-3d-backend-latest.onrender.com';
+
 
 /**
  * Client-side fallback generator in case Python backend is unreachable

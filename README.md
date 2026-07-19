@@ -79,6 +79,44 @@ graph TD
 
 ---
 
+## 🤖 Agentic AI Orchestration & MCP Tool Framework
+
+**AstraChaos 3D** incorporates an **Agentic Physics Copilot** engineered around Model Context Protocol (MCP) design principles. When a user submits a natural language prompt, `CelestialCopilotAgent` orchestrates intent parsing, 3D state synthesis, physical momentum conservation, and LLM astrophysics reasoning across a specialized Python tool suite:
+
+### ⚙️ Python MCP Tool Suite (`backend/app/tools.py`)
+
+1. **`parse_astronomical_intent(prompt: str)`**
+   * **Role:** Evaluates user prompt for celestial mechanics patterns (*"binary star"*, *"figure-eight"*, *"pythagorean collision"*, *"slingshot"*, *"trojan"*, *"tidal ejection"*).
+   * **Output:** Selects appropriate mathematical orbital topology and mass distribution.
+
+2. **`synthesize_state_vectors(topology, perturbation)`**
+   * **Role:** Formulates 3D initial position vectors $\mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3 \in \mathbb{R}^3$, velocity vectors $\mathbf{v}_1, \mathbf{v}_2, \mathbf{v}_3 \in \mathbb{R}^3$, and mass ratios $m_1, m_2, m_3$.
+   * **Output:** Initial condition state vector matrices and per-body signature color schemes.
+
+3. **`normalize_center_of_mass(masses, pos, vel)`**
+   * **Role:** Applies linear transformations to shift Center of Mass (COM) to origin $(0,0,0)$ and cancel total system momentum:
+     $$\mathbf{r}_{\text{COM}} = \frac{\sum m_i \mathbf{r}_i}{\sum m_i} = \mathbf{0}, \quad \mathbf{P} = \sum m_i \mathbf{v}_i = \mathbf{0}$$
+   * **Output:** Momentum-balanced state vectors that prevent linear drift in the WebGL 3D viewport.
+
+4. **`compute_physics_diagnostics(masses, pos, vel, perturbation)`**
+   * **Role:** Evaluates Hamiltonian mechanical energy $E = T + V$, total angular momentum $\|\mathbf{L}\| = \|\sum m_i (\mathbf{r}_i \times \mathbf{v}_i)\|$, Lyapunov divergence exponent $\lambda$, and chaos horizon time:
+     $$t_{\text{chaos}} \approx \frac{\ln(1/\delta)}{\lambda}$$
+   * **Output:** Real-time physics scorecard and quantitative stability classification.
+
+5. **`nvidia_nemotron_llm_reasoning(prompt, system_type, mass_ratio)`**
+   * **Role:** Invoices NVIDIA LLM platform (`z-ai/glm-5.2`) for domain-specific astrophysics reasoning, detailing gravitational potential wells, resonance boundaries, and chaotic scattering zones.
+   * **Output:** Synthesized astrophysicist diagnostic report embedded into response payload.
+
+---
+
+### 🔄 Resilient Dual-Engine Execution Strategy
+
+To guarantee **100% uptime and zero-downtime client interaction**:
+* **Online FastAPI Mode:** Connects to Python microservice at `http://localhost:8000` for full LLM reasoning and server-side tool execution.
+* **Offline Client Fallback (GitHub Pages):** If the backend server is offline or hosted as a static web app, `copilotClient.ts` gracefully activates an in-browser deterministic tool suite, ensuring zero UI crashes or broken user flows.
+
+---
+
 ## 🐳 Docker Container & GitHub Container Registry (GHCR)
 
 The Python FastAPI backend is containerized and automatically compiled, tested, and published to **GitHub Container Registry (GHCR)** using GitHub Actions (`.github/workflows/docker-ghcr.yml`).
