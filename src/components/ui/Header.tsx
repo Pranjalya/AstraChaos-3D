@@ -115,10 +115,12 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* FPS Meter */}
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-space-800/80 border border-slate-700/50 text-slate-300">
-          <Activity className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="hidden lg:flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-space-800/80 border border-slate-700/50 text-slate-300 w-[92px] tabular-nums shrink-0 font-mono">
+          <Activity className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
           <span>{fps} FPS</span>
         </div>
+
+
 
         {/* Inflection Alert */}
         {isDivergent && (
