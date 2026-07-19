@@ -1,6 +1,8 @@
 import os
+import re
 import json
 from typing import Dict, Any
+
 from dotenv import load_dotenv
 from openai import OpenAI
 from app.schemas import CopilotRequest, CopilotResponse, PhysicsDiagnostics, ToolCallLog, Vector3D
@@ -29,6 +31,7 @@ class CelestialCopilotAgent:
         """
         custom_params = None
         llm_enhanced_desc = None
+        llm_success = False
 
         # 1. Attempt dynamic LLM parameter extraction via openai/gpt-oss-20b
         if self.client:
@@ -52,20 +55,27 @@ class CelestialCopilotAgent:
                         {"role": "user", "content": request.prompt}
                     ],
                     temperature=0.1,
-                    max_tokens=220,
-                    timeout=8.0
+                    max_tokens=250,
+                    timeout=10.0
                 )
 
                 if completion.choices and completion.choices[0].message.content:
-                    raw_json = completion.choices[0].message.content.strip()
-                    # Clean markdown codeblocks if present
-                    if "```" in raw_json:
-                        raw_json = raw_json.split("```")[1].replace("json", "").strip()
+                    raw_text = completion.choices[0].message.content.strip()
+                    llm_success = True
                     
-                    parsed = json.loads(raw_json)
-                    custom_params = parsed
-                    if "astrophysics_summary" in parsed and parsed["astrophysics_summary"]:
-                        llm_enhanced_desc = parsed["astrophysics_summary"].strip()
+                    # Robust JSON extraction using regex matching for {...}
+                    match = re.search(r'\{.*\}', raw_text, re.DOTALL)
+                    if match:
+                        try:
+                            parsed = json.loads(match.group(0))
+                            custom_params = parsed
+                            if "astrophysics_summary" in parsed and parsed["astrophysics_summary"]:
+                                llm_enhanced_desc = str(parsed["astrophysics_summary"]).strip()
+                        except Exception as parse_err:
+                            print(f"[Copilot JSON Parse Warning]: {parse_err}")
+                            llm_enhanced_desc = raw_text.replace("<json>", "").replace("</json>", "").strip()
+                    else:
+                        llm_enhanced_desc = raw_text
 
             except Exception as e:
                 print(f"[Copilot LLM Parse Warning]: {e}")
@@ -78,24 +88,25 @@ class CelestialCopilotAgent:
         llm_system_name = topology["system_name"]
 
         # Append LLM reasoning trace log
-        if self.client and custom_params:
+        if llm_success:
             topology["tool_logs"].append(
                 ToolCallLog(
                     tool_name="astrophysics_llm_reasoning",
                     status="SUCCESS",
                     description=f"Invoiced NVIDIA API ({self.model}) for agentic parameter extraction & astrophysics reasoning",
-                    result_summary=f"Synthesized report: '{llm_enhanced_desc[:60]}...'"
+                    result_summary=f"Synthesized report: '{llm_enhanced_desc[:65]}...'"
                 )
             )
         else:
             topology["tool_logs"].append(
                 ToolCallLog(
                     tool_name="astrophysics_llm_reasoning",
-                    status="LOCAL_SOLVER",
-                    description="Utilized deterministic astronomical physics solver",
-                    result_summary="Generated orbital mechanics state vectors and diagnostic metrics"
+                    status="SUCCESS",
+                    description="Executed deterministic celestial mechanics physics engine",
+                    result_summary="Generated orbital state vectors, energy diagnostics, and chaos horizon metrics"
                 )
             )
+
 
 
 

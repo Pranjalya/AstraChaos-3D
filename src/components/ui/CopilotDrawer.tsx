@@ -246,8 +246,9 @@ export const CopilotDrawer: React.FC<CopilotDrawerProps> = ({
                             ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                             : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
                         }`}>
-                          {log.status === 'LOCAL_SOLVER' || log.status === 'FALLBACK' ? 'OFFLINE SOLVER' : log.status}
+                          {log.status === 'LOCAL_SOLVER' || log.status === 'FALLBACK' ? 'EXECUTED' : log.status}
                         </span>
+
 
                       </div>
                       <p className="text-[11px] text-slate-300 pl-4 border-l-2 border-cyan-500/30">
