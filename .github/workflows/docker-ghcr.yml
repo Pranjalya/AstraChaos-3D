@@ -1,11 +1,6 @@
 name: Build and Push Backend Docker Image to GHCR
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/docker-ghcr.yml'
   workflow_dispatch:
 
 permissions:
