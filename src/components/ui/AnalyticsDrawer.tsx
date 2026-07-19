@@ -28,34 +28,33 @@ export const AnalyticsDrawer: React.FC<AnalyticsDrawerProps> = ({
 
   // Take recent metrics for display
   const chartData = metricsHistory.slice(-120);
-  const maxDiv = Math.max(...chartData.map((d) => d.divergence), 0.0001);
 
   return (
-    <div className="absolute bottom-4 left-4 right-4 z-20 pointer-events-auto transition-all duration-300">
+    <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-4 sm:right-4 z-20 pointer-events-auto transition-all duration-300">
       <div className="rounded-2xl glass-panel border border-white/10 overflow-hidden shadow-2xl">
         {/* Drawer Header Toggle */}
-        <div className="flex items-center justify-between px-4 py-2.5 bg-space-800/80 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-lg bg-pink-950/80 border border-pink-500/40 flex items-center justify-center text-pink-400">
-              <ChartIcon className="w-4 h-4" />
+        <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 bg-space-800/80 border-b border-white/10">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-pink-950/80 border border-pink-500/40 flex items-center justify-center text-pink-400">
+              <ChartIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-semibold text-white flex items-center gap-2">
-                <span>Euclidean Divergence Analytics</span>
-                <span className="font-mono text-[10px] text-pink-400 bg-pink-950/60 px-2 py-0.5 rounded border border-pink-500/30">
-                  ||r_A - r_B|| = {currentDivergence.toExponential(3)}
+              <h3 className="text-xs font-semibold text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span>Divergence Analytics</span>
+                <span className="font-mono text-[10px] text-pink-400 bg-pink-950/60 px-1.5 py-0.5 rounded border border-pink-500/30">
+                  ||r_A - r_B|| = {currentDivergence.toExponential(2)}
                 </span>
               </h3>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Scale toggle */}
             {isOpen && (
-              <div className="flex items-center gap-1.5 text-[11px] font-mono bg-space-900/60 px-2 py-1 rounded-lg border border-slate-700">
+              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] font-mono bg-space-900/60 px-1.5 py-0.5 rounded-lg border border-slate-700">
                 <button
                   onClick={() => setUseLogScale(false)}
-                  className={`px-2 py-0.5 rounded ${
+                  className={`px-1.5 py-0.5 rounded ${
                     !useLogScale ? 'bg-cyan-500/30 text-cyan-300 font-bold' : 'text-slate-400'
                   }`}
                 >
@@ -63,7 +62,7 @@ export const AnalyticsDrawer: React.FC<AnalyticsDrawerProps> = ({
                 </button>
                 <button
                   onClick={() => setUseLogScale(true)}
-                  className={`px-2 py-0.5 rounded ${
+                  className={`px-1.5 py-0.5 rounded ${
                     useLogScale ? 'bg-pink-500/30 text-pink-300 font-bold' : 'text-slate-400'
                   }`}
                 >
@@ -83,7 +82,7 @@ export const AnalyticsDrawer: React.FC<AnalyticsDrawerProps> = ({
 
         {/* Chart Content */}
         {isOpen && (
-          <div className="p-3 bg-space-900/90 h-44 sm:h-52 w-full relative">
+          <div className="p-2 sm:p-3 bg-space-900/90 h-36 sm:h-52 w-full relative">
             {chartData.length < 3 ? (
               <div className="h-full flex items-center justify-center text-slate-500 text-xs gap-2 font-mono">
                 <AlertCircle className="w-4 h-4 text-cyan-400 animate-spin" />
@@ -91,7 +90,7 @@ export const AnalyticsDrawer: React.FC<AnalyticsDrawerProps> = ({
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+                <LineChart data={chartData} margin={{ top: 10, right: 15, left: -25, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} />
                   <XAxis
                     dataKey="time"
@@ -127,7 +126,7 @@ export const AnalyticsDrawer: React.FC<AnalyticsDrawerProps> = ({
                     label={{
                       value: 'Inflection Threshold',
                       fill: '#ff007f',
-                      fontSize: 10,
+                      fontSize: 9,
                       position: 'insideTopRight',
                     }}
                   />
@@ -137,7 +136,7 @@ export const AnalyticsDrawer: React.FC<AnalyticsDrawerProps> = ({
                     stroke="#ff007f"
                     strokeWidth={2}
                     dot={false}
-                    activeDot={{ r: 5, fill: '#00f3ff', stroke: '#ff007f', strokeWidth: 2 }}
+                    activeDot={{ r: 4, fill: '#00f3ff', stroke: '#ff007f', strokeWidth: 2 }}
                     isAnimationActive={false}
                   />
                 </LineChart>

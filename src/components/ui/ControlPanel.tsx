@@ -97,16 +97,16 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
   return (
     <aside
-      className={`absolute top-20 left-4 z-20 transition-all duration-300 pointer-events-auto ${
-        isOpen ? 'w-80 sm:w-96' : 'w-12'
+      className={`absolute top-16 left-2 sm:top-20 sm:left-4 z-20 transition-all duration-300 pointer-events-auto ${
+        isOpen ? 'w-[calc(100vw-1rem)] max-w-sm sm:w-96' : 'w-10 sm:w-12'
       }`}
     >
-      <div className="rounded-2xl glass-panel overflow-hidden border border-white/10 shadow-2xl flex flex-col max-h-[calc(100vh-140px)]">
+      <div className="rounded-2xl glass-panel overflow-hidden border border-white/10 shadow-2xl flex flex-col max-h-[calc(100vh-160px)]">
         {/* Header & Toggle Button */}
-        <div className="flex items-center justify-between p-3 border-b border-white/10 bg-space-800/60">
+        <div className="flex items-center justify-between p-2.5 sm:p-3 border-b border-white/10 bg-space-800/60">
           <div className="flex items-center gap-2">
             <Sliders className="w-4 h-4 text-cyan-400" />
-            {isOpen && <span className="text-sm font-semibold text-white">Simulation Controls</span>}
+            {isOpen && <span className="text-xs sm:text-sm font-semibold text-white">Simulation Controls</span>}
           </div>
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -120,7 +120,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         {isOpen && (
           <>
             {/* Quick Playback Bar */}
-            <div className="flex items-center gap-2 p-3 bg-space-900/50 border-b border-white/5">
+            <div className="flex items-center gap-2 p-2.5 sm:p-3 bg-space-900/50 border-b border-white/5">
               <button
                 onClick={onTogglePlay}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-xl font-medium text-xs transition-all ${
@@ -142,12 +142,12 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex border-b border-white/10 text-[11px] font-medium bg-space-900/80 overflow-x-auto">
+            <div className="flex border-b border-white/10 text-[10px] sm:text-[11px] font-medium bg-space-900/80 overflow-x-auto">
               {[
                 { id: 'presets', label: 'Presets', icon: Sparkles },
                 { id: 'butterfly', label: 'Butterfly', icon: Layers },
                 { id: 'physics', label: 'Mass & Size', icon: Sliders },
-                { id: 'colors', label: 'Body Colors', icon: Palette },
+                { id: 'colors', label: 'Colors', icon: Palette },
                 { id: 'camera', label: 'View', icon: Camera },
               ].map((tab) => {
                 const Icon = tab.icon;
@@ -156,7 +156,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex-1 flex items-center justify-center gap-1 py-2.5 px-2 border-b-2 whitespace-nowrap transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-1 py-2 sm:py-2.5 px-1.5 whitespace-nowrap border-b-2 transition-all ${
                       active
                         ? 'border-cyan-400 text-cyan-300 bg-cyan-950/20 font-semibold'
                         : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5'
@@ -178,7 +178,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             )}
 
             {/* Tab Contents Container */}
-            <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-280px)] text-xs">
+            <div className="p-3 sm:p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-300px)] text-xs">
               {/* TAB 1: PRESETS */}
               {activeTab === 'presets' && (
                 <div className="space-y-3">
@@ -255,9 +255,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                       className="w-full accent-pink-500 bg-space-700 h-1.5 rounded-lg cursor-pointer"
                     />
                     <div className="flex justify-between text-[9px] text-slate-500 font-mono mt-1">
-                      <span>10^-9 (Microscopic)</span>
-                      <span>10^-6 (Nanometer)</span>
-                      <span>10^-3 (Visible)</span>
+                      <span>10^-9 (Quantum)</span>
+                      <span>10^-6 (Nano)</span>
+                      <span>10^-3 (Macro)</span>
                     </div>
                   </div>
 

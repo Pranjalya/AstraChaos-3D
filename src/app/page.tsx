@@ -8,6 +8,7 @@ import { Header } from '@/components/ui/Header';
 import { ControlPanel } from '@/components/ui/ControlPanel';
 import { AnalyticsDrawer } from '@/components/ui/AnalyticsDrawer';
 import { GuideModal } from '@/components/ui/GuideModal';
+import { TourOverlay } from '@/components/ui/TourOverlay';
 
 // Dynamically import Canvas to bypass SSR issues with WebGL/Three.js
 const SimulationCanvas = dynamic(
@@ -31,8 +32,9 @@ export default function Home() {
   const [bodyColors, setBodyColors] = useState<[string, string, string]>(['#ffaa00', '#00f3ff', '#ff007f']);
   const [resetTrigger, setResetTrigger] = useState<number>(0);
 
-  // Guide Modal State
+  // Modals & Tour State
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
+  const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
 
   // Telemetry Metrics
   const [fps, setFps] = useState<number>(60);
@@ -119,6 +121,7 @@ export default function Home() {
         divergence={currentDivergence}
         elapsedTime={elapsedTime}
         onOpenGuide={() => setIsGuideOpen(true)}
+        onStartTour={() => setIsTourOpen(true)}
       />
 
       {/* Control Panel Sidebar */}
@@ -161,6 +164,12 @@ export default function Home() {
       <GuideModal
         isOpen={isGuideOpen}
         onClose={() => setIsGuideOpen(false)}
+      />
+
+      {/* Interactive Onboarding Tour Overlay */}
+      <TourOverlay
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
       />
     </main>
   );

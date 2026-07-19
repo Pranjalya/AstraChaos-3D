@@ -1,6 +1,17 @@
 {
   "name": "astrachaos-3d",
   "version": "0.1.0",
+  "description": "High-performance interactive 3D simulation of the chaotic Three-Body Problem demonstrating the Butterfly Effect using Next.js, React Three Fiber, and a Rust WebAssembly RK4 physics engine.",
+  "author": "Pranjalya Tiwari <https://github.com/Pranjalya>",
+  "homepage": "https://pranjalya.github.io/AstraChaos-3D",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pranjalya/AstraChaos-3D.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Pranjalya/AstraChaos-3D/issues"
+  },
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
