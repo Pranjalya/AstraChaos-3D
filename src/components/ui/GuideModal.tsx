@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, HelpCircle, Sparkles, Scale, Cpu, Compass } from 'lucide-react';
+import { X, HelpCircle, Sparkles, Scale, Cpu, Compass, Github, User } from 'lucide-react';
 
 interface GuideModalProps {
   isOpen: boolean;
@@ -41,6 +41,41 @@ export const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
 
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-300 leading-relaxed">
+          {/* Developer Badge */}
+          <div className="p-3 rounded-2xl bg-gradient-to-r from-cyan-950/60 via-space-800/80 to-pink-950/60 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-cyan-900/50 border border-cyan-400/50 flex items-center justify-center text-cyan-300">
+                <User className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase tracking-widest block font-semibold">
+                  Architect & Systems Engineer
+                </span>
+                <span className="font-bold text-white text-sm">Pranjalya Tiwari</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <a
+                href="https://github.com/Pranjalya"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-space-800/90 border border-slate-700/80 text-cyan-300 hover:bg-slate-700/80 hover:text-white transition-all text-[11px]"
+              >
+                <Github className="w-3.5 h-3.5" />
+                <span>GitHub Profile</span>
+              </a>
+              <a
+                href="https://github.com/Pranjalya/AstraChaos-3D"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500/20 to-pink-500/20 border border-cyan-400/40 text-white hover:border-cyan-300 transition-all text-[11px]"
+              >
+                <Github className="w-3.5 h-3.5 text-pink-400" />
+                <span>Project Repo</span>
+              </a>
+            </div>
+          </div>
+
           {/* Section 1: The Three-Body Problem */}
           <div className="p-4 rounded-2xl bg-space-800/50 border border-white/5 space-y-2">
             <h3 className="font-bold text-sm text-cyan-400 flex items-center gap-2">
@@ -121,7 +156,10 @@ export const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-white/10 bg-space-800/60 flex justify-end">
+        <div className="p-4 border-t border-white/10 bg-space-800/60 flex items-center justify-between">
+          <span className="text-[11px] text-slate-400">
+            AstraChaos 3D &copy; {new Date().getFullYear()} Pranjalya Tiwari
+          </span>
           <button
             onClick={onClose}
             className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-pink-500 text-white font-semibold text-xs hover:opacity-90 transition-opacity shadow-lg shadow-cyan-500/20"

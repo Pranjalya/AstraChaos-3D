@@ -241,8 +241,12 @@ export async function createPhysicsEngine(
 ): Promise<PhysicsSolver> {
   try {
     if (typeof window !== 'undefined') {
-      const wasmModule = await import(/* webpackIgnore: true */ '/wasm/wasm_physics.js');
-      await wasmModule.default('/wasm/wasm_physics_bg.wasm');
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || (process.env.NODE_ENV === 'production' ? '/AstraChaos-3D' : '');
+      const wasmJsUrl = `${basePath}/wasm/wasm_physics.js`;
+      const wasmBgUrl = `${basePath}/wasm/wasm_physics_bg.wasm`;
+
+      const wasmModule = await import(/* webpackIgnore: true */ wasmJsUrl);
+      await wasmModule.default(wasmBgUrl);
       const engine = new wasmModule.PhysicsEngine(
         new Float64Array(masses),
         new Float64Array(posA),
@@ -251,7 +255,7 @@ export async function createPhysicsEngine(
         gConst,
         softening
       );
-      console.log('✅ Loaded WASM Physics Engine');
+      console.log('✅ Loaded WASM Physics Engine from', wasmBgUrl);
       return new WasmPhysicsWrapper(engine);
     }
   } catch (err) {

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Cpu, Zap, Activity, AlertTriangle, BookOpen } from 'lucide-react';
+import { Cpu, Zap, Activity, AlertTriangle, BookOpen, Github, User } from 'lucide-react';
 
 interface HeaderProps {
   fps: number;
@@ -38,8 +38,32 @@ export const Header: React.FC<HeaderProps> = ({ fps, isWasm, divergence, elapsed
         </div>
       </div>
 
-      {/* Realtime Badges & Guide Button */}
-      <div className="flex items-center gap-2 sm:gap-4 font-mono text-xs">
+      {/* Realtime Badges, Developer Link & Guide Button */}
+      <div className="flex items-center gap-2 sm:gap-3 font-mono text-xs">
+        {/* Developer Credit */}
+        <a
+          href="https://github.com/Pranjalya"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-space-800/80 border border-slate-700/60 text-slate-300 hover:text-cyan-300 hover:border-cyan-500/40 transition-all"
+          title="Developer: Pranjalya Tiwari"
+        >
+          <User className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="font-sans font-medium text-[11px]">Pranjalya Tiwari</span>
+        </a>
+
+        {/* GitHub Repository Link */}
+        <a
+          href="https://github.com/Pranjalya/AstraChaos-3D"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-space-800/80 border border-slate-700/60 text-slate-300 hover:text-white hover:border-slate-500 transition-all"
+          title="GitHub Repository"
+        >
+          <Github className="w-3.5 h-3.5 text-slate-200" />
+          <span className="font-sans font-medium text-[11px] hidden sm:inline">GitHub</span>
+        </a>
+
         {/* Guide Button */}
         <button
           onClick={onOpenGuide}
