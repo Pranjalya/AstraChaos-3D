@@ -5,7 +5,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import * as THREE from 'three';
-import { CameraTargetMode, DivergencePoint } from '@/types/physics';
+import { CameraTargetMode, DivergencePoint, Vector3D } from '@/types/physics';
 import { PhysicsSolver, createPhysicsEngine } from '@/utils/wasmBridge';
 import { PRESETS } from '@/utils/presets';
 import { Bodies } from './Bodies';
@@ -25,6 +25,8 @@ interface SimulationCanvasProps {
   masses: [number, number, number];
   sizeScale: number;
   bodyColors: [string, string, string];
+  customPosA: [Vector3D, Vector3D, Vector3D];
+  customVelA: [Vector3D, Vector3D, Vector3D];
   onMetricsUpdate: (point: DivergencePoint, currentFps: number, isWasm: boolean, elapsedTime: number) => void;
   resetTrigger: number;
 }
@@ -42,6 +44,8 @@ const SimulationLoop: React.FC<SimulationCanvasProps & { controlsRef: React.RefO
   masses,
   sizeScale,
   bodyColors,
+  customPosA,
+  customVelA,
   onMetricsUpdate,
   resetTrigger,
   controlsRef,
@@ -59,19 +63,19 @@ const SimulationLoop: React.FC<SimulationCanvasProps & { controlsRef: React.RefO
   const lastTime = useRef(performance.now());
   const fpsRef = useRef(60);
 
-  // Initialize or Reset Physics Engine
+  // Initialize or Reset Physics Engine with custom initial position/velocity vectors
   useEffect(() => {
     let isMounted = true;
     const preset = PRESETS[presetKey] || PRESETS.figureEight;
     const pA = [
-      preset.posA[0].x, preset.posA[0].y, preset.posA[0].z,
-      preset.posA[1].x, preset.posA[1].y, preset.posA[1].z,
-      preset.posA[2].x, preset.posA[2].y, preset.posA[2].z,
+      customPosA[0].x, customPosA[0].y, customPosA[0].z,
+      customPosA[1].x, customPosA[1].y, customPosA[1].z,
+      customPosA[2].x, customPosA[2].y, customPosA[2].z,
     ];
     const vA = [
-      preset.velA[0].x, preset.velA[0].y, preset.velA[0].z,
-      preset.velA[1].x, preset.velA[1].y, preset.velA[1].z,
-      preset.velA[2].x, preset.velA[2].y, preset.velA[2].z,
+      customVelA[0].x, customVelA[0].y, customVelA[0].z,
+      customVelA[1].x, customVelA[1].y, customVelA[1].z,
+      customVelA[2].x, customVelA[2].y, customVelA[2].z,
     ];
 
     createPhysicsEngine(masses, pA, vA, perturbation, preset.gConst, preset.softening).then((solver) => {

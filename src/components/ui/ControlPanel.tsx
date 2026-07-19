@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { PRESETS } from '@/utils/presets';
-import { CameraTargetMode } from '@/types/physics';
+import { CameraTargetMode, Vector3D } from '@/types/physics';
 import {
   Play,
   Pause,
@@ -17,6 +17,10 @@ import {
   HelpCircle,
   Maximize2,
   Palette,
+  Move,
+  Lock,
+  Unlock,
+  Shuffle,
 } from 'lucide-react';
 
 interface ControlPanelProps {
@@ -46,6 +50,17 @@ interface ControlPanelProps {
   bodyColors: [string, string, string];
   onBodyColorChange: (idx: number, color: string) => void;
   onApplyColorPalette: (palette: [string, string, string]) => void;
+  posA: [Vector3D, Vector3D, Vector3D];
+  velA: [Vector3D, Vector3D, Vector3D];
+  onVectorChange: (
+    type: 'pos' | 'vel',
+    bodyIdx: number,
+    axis: 'x' | 'y' | 'z',
+    val: number
+  ) => void;
+  onZeroVelocities: () => void;
+  onRandomizeVectors: () => void;
+  elapsedTime: number;
 }
 
 const PALETTE_PRESETS: { name: string; colors: [string, string, string] }[] = [
@@ -82,10 +97,21 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   bodyColors,
   onBodyColorChange,
   onApplyColorPalette,
+  posA,
+  velA,
+  onVectorChange,
+  onZeroVelocities,
+  onRandomizeVectors,
+  elapsedTime,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState<'presets' | 'butterfly' | 'physics' | 'colors' | 'camera'>('presets');
+  const [activeTab, setActiveTab] = useState<
+    'presets' | 'butterfly' | 'physics' | 'vectors' | 'colors' | 'camera'
+  >('presets');
   const [hoveredTooltip, setHoveredTooltip] = useState<string | null>(null);
+
+  // Initial vectors can only be edited when t === 0s
+  const canEditVectors = elapsedTime === 0;
 
   // Convert perturbation (1e-9 to 1e-3) to slider exponent (-9 to -3)
   const logExp = Math.log10(Math.max(1e-12, perturbation));
@@ -134,10 +160,11 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               </button>
               <button
                 onClick={onReset}
-                className="p-2 rounded-xl bg-slate-800/80 border border-slate-700/60 text-slate-300 hover:bg-slate-700/80 hover:text-white transition-all"
-                title="Reset Simulation"
+                className="p-2 rounded-xl bg-slate-800/80 border border-slate-700/60 text-slate-300 hover:bg-slate-700/80 hover:text-white transition-all flex items-center gap-1 text-xs"
+                title="Reset Simulation (t = 0s)"
               >
                 <RotateCcw className="w-4 h-4" />
+                <span className="hidden sm:inline">Reset</span>
               </button>
             </div>
 
@@ -145,6 +172,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <div className="flex border-b border-white/10 text-[10px] sm:text-[11px] font-medium bg-space-900/80 overflow-x-auto">
               {[
                 { id: 'presets', label: 'Presets', icon: Sparkles },
+                { id: 'vectors', label: 'Vectors', icon: Move },
                 { id: 'butterfly', label: 'Butterfly', icon: Layers },
                 { id: 'physics', label: 'Mass & Size', icon: Sliders },
                 { id: 'colors', label: 'Colors', icon: Palette },
@@ -221,7 +249,141 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 </div>
               )}
 
-              {/* TAB 2: BUTTERFLY FACTOR */}
+              {/* TAB 2: INITIAL 3D VECTORS */}
+              {activeTab === 'vectors' && (
+                <div className="space-y-4">
+                  {/* Lock Status Banner */}
+                  <div
+                    className={`p-2.5 rounded-xl border flex items-center justify-between text-[11px] ${
+                      canEditVectors
+                        ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                        : 'bg-amber-950/40 border-amber-500/40 text-amber-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {canEditVectors ? (
+                        <Unlock className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <Lock className="w-4 h-4 text-amber-400" />
+                      )}
+                      <span className="font-semibold">
+                        {canEditVectors
+                          ? 'Editable (Initial State t = 0s)'
+                          : 'Locked (Reset simulation to edit)'}
+                      </span>
+                    </div>
+                    {!canEditVectors && (
+                      <button
+                        onClick={onReset}
+                        className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 font-mono text-[10px]"
+                      >
+                        Reset t=0s
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Quick Action Buttons */}
+                  {canEditVectors && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={onZeroVelocities}
+                        className="flex-1 flex items-center justify-center gap-1.5 p-2 rounded-xl bg-space-800/80 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-white transition-all text-[11px]"
+                      >
+                        <span>Zero Velocities</span>
+                      </button>
+                      <button
+                        onClick={onRandomizeVectors}
+                        className="flex-1 flex items-center justify-center gap-1.5 p-2 rounded-xl bg-gradient-to-r from-cyan-500/20 to-pink-500/20 border border-cyan-400/40 hover:border-cyan-300 text-white transition-all text-[11px]"
+                      >
+                        <Shuffle className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Randomize 3D</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Vector Editors per Body */}
+                  {[0, 1, 2].map((bodyIdx) => (
+                    <div
+                      key={`vector-editor-${bodyIdx}`}
+                      className="p-3 rounded-xl bg-space-800/50 border border-white/5 space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                        <span className="font-semibold text-slate-200 flex items-center gap-1.5 text-[11px]">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: bodyColors[bodyIdx] }}
+                          />
+                          Body {bodyIdx + 1} Starting Vectors
+                        </span>
+                      </div>
+
+                      {/* Position Vectors [x, y, z] */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-mono text-slate-400 block uppercase">
+                          Position [x, y, z]:
+                        </span>
+                        <div className="grid grid-cols-3 gap-1.5 font-mono text-[10px]">
+                          {(['x', 'y', 'z'] as const).map((axis) => (
+                            <div key={`pos-${bodyIdx}-${axis}`} className="space-y-0.5">
+                              <div className="flex justify-between text-slate-400">
+                                <span>{axis.toUpperCase()}</span>
+                                <span className="text-cyan-400 font-bold">
+                                  {posA[bodyIdx][axis].toFixed(2)}
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="-6.0"
+                                max="6.0"
+                                step="0.1"
+                                disabled={!canEditVectors}
+                                value={posA[bodyIdx][axis]}
+                                onChange={(e) =>
+                                  onVectorChange('pos', bodyIdx, axis, parseFloat(e.target.value))
+                                }
+                                className="w-full accent-cyan-400 bg-space-700 h-1.5 rounded cursor-pointer disabled:opacity-40"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Velocity Vectors [vx, vy, vz] */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-mono text-slate-400 block uppercase">
+                          Velocity [vx, vy, vz]:
+                        </span>
+                        <div className="grid grid-cols-3 gap-1.5 font-mono text-[10px]">
+                          {(['x', 'y', 'z'] as const).map((axis) => (
+                            <div key={`vel-${bodyIdx}-${axis}`} className="space-y-0.5">
+                              <div className="flex justify-between text-slate-400">
+                                <span>v{axis}</span>
+                                <span className="text-pink-400 font-bold">
+                                  {velA[bodyIdx][axis].toFixed(2)}
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="-3.0"
+                                max="3.0"
+                                step="0.05"
+                                disabled={!canEditVectors}
+                                value={velA[bodyIdx][axis]}
+                                onChange={(e) =>
+                                  onVectorChange('vel', bodyIdx, axis, parseFloat(e.target.value))
+                                }
+                                className="w-full accent-pink-500 bg-space-700 h-1.5 rounded cursor-pointer disabled:opacity-40"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* TAB 3: BUTTERFLY FACTOR */}
               {activeTab === 'butterfly' && (
                 <div className="space-y-4">
                   <div>
@@ -294,7 +456,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 </div>
               )}
 
-              {/* TAB 3: MASS & SIZE PARAMETERS */}
+              {/* TAB 4: MASS & SIZE PARAMETERS */}
               {activeTab === 'physics' && (
                 <div className="space-y-4">
                   {/* Visual Size Scale Slider */}
@@ -413,7 +575,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 </div>
               )}
 
-              {/* TAB 4: BODY COLORS TAB */}
+              {/* TAB 5: BODY COLORS TAB */}
               {activeTab === 'colors' && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -482,7 +644,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 </div>
               )}
 
-              {/* TAB 5: CAMERA & VIEW */}
+              {/* TAB 6: CAMERA & VIEW */}
               {activeTab === 'camera' && (
                 <div className="space-y-3">
                   <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">

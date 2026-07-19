@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { CameraTargetMode, DivergencePoint } from '@/types/physics';
+import { CameraTargetMode, DivergencePoint, Vector3D } from '@/types/physics';
 import { PRESETS } from '@/utils/presets';
 import { Header } from '@/components/ui/Header';
 import { ControlPanel } from '@/components/ui/ControlPanel';
@@ -17,7 +17,7 @@ const SimulationCanvas = dynamic(
 );
 
 export default function Home() {
-  // Simulation State
+  // Simulation Preset & Parameters
   const [presetKey, setPresetKey] = useState<string>('figureEight');
   const [perturbation, setPerturbation] = useState<number>(1e-7);
   const [dt, setDt] = useState<number>(0.008);
@@ -31,6 +31,19 @@ export default function Home() {
   const [sizeScale, setSizeScale] = useState<number>(1.0);
   const [bodyColors, setBodyColors] = useState<[string, string, string]>(['#ffaa00', '#00f3ff', '#ff007f']);
   const [resetTrigger, setResetTrigger] = useState<number>(0);
+
+  // Initial Vectors State
+  const defaultPreset = PRESETS.figureEight;
+  const [posA, setPosA] = useState<[Vector3D, Vector3D, Vector3D]>([
+    { ...defaultPreset.posA[0] },
+    { ...defaultPreset.posA[1] },
+    { ...defaultPreset.posA[2] },
+  ]);
+  const [velA, setVelA] = useState<[Vector3D, Vector3D, Vector3D]>([
+    { ...defaultPreset.velA[0] },
+    { ...defaultPreset.velA[1] },
+    { ...defaultPreset.velA[2] },
+  ]);
 
   // Modals & Tour State
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
@@ -51,16 +64,80 @@ export default function Home() {
     setDt(preset.defaultDt);
     setSubSteps(preset.defaultSubSteps);
     setMasses([...preset.masses]);
+    setPosA([
+      { ...preset.posA[0] },
+      { ...preset.posA[1] },
+      { ...preset.posA[2] },
+    ]);
+    setVelA([
+      { ...preset.velA[0] },
+      { ...preset.velA[1] },
+      { ...preset.velA[2] },
+    ]);
     if (preset.bodyColors) {
       setBodyColors([...preset.bodyColors]);
     }
     setMetricsHistory([]);
+    setElapsedTime(0);
     setResetTrigger((prev) => prev + 1);
   };
 
   // Reset Handler
   const handleReset = () => {
     setMetricsHistory([]);
+    setElapsedTime(0);
+    setResetTrigger((prev) => prev + 1);
+  };
+
+  // Vector Edit Handler (Only at t = 0s)
+  const handleVectorChange = (
+    type: 'pos' | 'vel',
+    bodyIdx: number,
+    axis: 'x' | 'y' | 'z',
+    val: number
+  ) => {
+    if (type === 'pos') {
+      const nextPos = [...posA] as [Vector3D, Vector3D, Vector3D];
+      nextPos[bodyIdx] = { ...nextPos[bodyIdx], [axis]: val };
+      setPosA(nextPos);
+    } else {
+      const nextVel = [...velA] as [Vector3D, Vector3D, Vector3D];
+      nextVel[bodyIdx] = { ...nextVel[bodyIdx], [axis]: val };
+      setVelA(nextVel);
+    }
+    setMetricsHistory([]);
+    setElapsedTime(0);
+    setResetTrigger((prev) => prev + 1);
+  };
+
+  // Zero Velocities Handler
+  const handleZeroVelocities = () => {
+    setVelA([
+      { x: 0, y: 0, z: 0 },
+      { x: 0, y: 0, z: 0 },
+      { x: 0, y: 0, z: 0 },
+    ]);
+    setMetricsHistory([]);
+    setElapsedTime(0);
+    setResetTrigger((prev) => prev + 1);
+  };
+
+  // Randomize Vectors Handler
+  const handleRandomizeVectors = () => {
+    const randomPos: [Vector3D, Vector3D, Vector3D] = [
+      { x: (Math.random() - 0.5) * 6, y: (Math.random() - 0.5) * 6, z: (Math.random() - 0.5) * 2 },
+      { x: (Math.random() - 0.5) * 6, y: (Math.random() - 0.5) * 6, z: (Math.random() - 0.5) * 2 },
+      { x: (Math.random() - 0.5) * 6, y: (Math.random() - 0.5) * 6, z: (Math.random() - 0.5) * 2 },
+    ];
+    const randomVel: [Vector3D, Vector3D, Vector3D] = [
+      { x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2, z: (Math.random() - 0.5) * 1 },
+      { x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2, z: (Math.random() - 0.5) * 1 },
+      { x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2, z: (Math.random() - 0.5) * 1 },
+    ];
+    setPosA(randomPos);
+    setVelA(randomVel);
+    setMetricsHistory([]);
+    setElapsedTime(0);
     setResetTrigger((prev) => prev + 1);
   };
 
@@ -110,6 +187,8 @@ export default function Home() {
         masses={masses}
         sizeScale={sizeScale}
         bodyColors={bodyColors}
+        customPosA={posA}
+        customVelA={velA}
         onMetricsUpdate={handleMetricsUpdate}
         resetTrigger={resetTrigger}
       />
@@ -152,6 +231,12 @@ export default function Home() {
         bodyColors={bodyColors}
         onBodyColorChange={handleBodyColorChange}
         onApplyColorPalette={handleApplyColorPalette}
+        posA={posA}
+        velA={velA}
+        onVectorChange={handleVectorChange}
+        onZeroVelocities={handleZeroVelocities}
+        onRandomizeVectors={handleRandomizeVectors}
+        elapsedTime={elapsedTime}
       />
 
       {/* Real-time Analytics Drawer */}
