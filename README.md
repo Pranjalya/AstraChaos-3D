@@ -41,10 +41,9 @@ To eliminate structural drift inherent in standard Euler integration methods, th
 Ensure you have **Node.js (v18+)**, **Rust**, and **wasm-pack** globally installed on your environment.
 
 1. **Clone the Repository:**
-   ```bash
-   git clone [https://github.com/Pranjalya/AstraChaos-3D.git](https://github.com/Pranjalya/AstraChaos-3D.git)
-   cd AstraChaos-3D
-
+```bash
+git clone https://github.com/Pranjalya/AstraChaos-3D.git
+cd AstraChaos-3D
 ```
 
 2. **Compile the Physics Core (Rust to WASM):**
@@ -52,23 +51,19 @@ Ensure you have **Node.js (v18+)**, **Rust**, and **wasm-pack** globally install
 cd wasm-physics
 wasm-pack build --target web
 cd ..
-
 ```
 
 
 3. **Install UI Frontend Dependencies:**
 ```bash
 npm install
-
 ```
 
 
 4. **Boot the Application Platform:**
 ```bash
 npm run dev
-
 ```
-
 
 
 Open `http://localhost:3000` in your browser to launch the interface.
