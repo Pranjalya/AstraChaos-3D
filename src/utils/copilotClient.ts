@@ -2,6 +2,27 @@ import { CopilotResponsePayload, Vector3D, PhysicsDiagnostics, ToolCallLog } fro
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://astrachaos-3d-backend-latest.onrender.com';
 
+let warmupTriggered = false;
+
+/**
+ * Fires a non-blocking health check ping to wake up the backend from cold start
+ * (e.g., when deployed on free hosting tiers like Render).
+ */
+export function warmupCopilotBackend(): void {
+  if (warmupTriggered) return;
+  warmupTriggered = true;
+  fetch(`${BACKEND_URL}/api/health`, { method: 'GET' })
+    .then((res) => {
+      if (res.ok) {
+        console.log('[Copilot Client] Backend service warmed up successfully.');
+      }
+    })
+    .catch((err) => {
+      console.log('[Copilot Client] Warmup health check ping issued:', err?.message || err);
+    });
+}
+
+
 
 /**
  * Client-side fallback generator in case Python backend is unreachable

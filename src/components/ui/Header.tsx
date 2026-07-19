@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Cpu, Zap, Activity, AlertTriangle, BookOpen, Github, User, Compass, Bot } from 'lucide-react';
+import { warmupCopilotBackend } from '@/utils/copilotClient';
 
 interface HeaderProps {
   fps: number;
@@ -52,13 +53,18 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-1.5 sm:gap-3 font-mono text-xs">
         {/* Agentic AI Copilot Button */}
         <button
-          onClick={onOpenCopilot}
+          onMouseEnter={warmupCopilotBackend}
+          onClick={() => {
+            warmupCopilotBackend();
+            onOpenCopilot();
+          }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-pink-500 text-white font-bold text-xs hover:opacity-90 transition-all shadow-lg shadow-cyan-500/25 animate-pulse"
           title="Open Agentic AI Celestial Copilot"
         >
           <Bot className="w-4 h-4 text-cyan-200" />
           <span className="font-sans font-bold">AI Copilot</span>
         </button>
+
 
         {/* Onboarding Tour Button */}
         <button

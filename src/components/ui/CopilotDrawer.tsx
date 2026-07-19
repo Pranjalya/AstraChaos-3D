@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Bot, 
   Sparkles, 
@@ -14,7 +14,7 @@ import {
   AlertCircle,
   Play
 } from 'lucide-react';
-import { fetchCopilotOrbit } from '@/utils/copilotClient';
+import { fetchCopilotOrbit, warmupCopilotBackend } from '@/utils/copilotClient';
 import { CopilotResponsePayload } from '@/types/physics';
 
 interface CopilotDrawerProps {
@@ -40,28 +40,28 @@ const PROMPT_SUGGESTIONS = [
     prompt: 'Build a Burrau 3:4:5 ratio Pythagorean triple collision experiencing explosive gravitational scattering.'
   },
   {
-    icon: '🌌',
-    title: 'Hierarchical Solar-Jupiter System',
-    prompt: 'Design a hierarchical triple system with a heavy sun, medium planet, and lightweight moon.'
+    icon: '☀️',
+    title: 'Hierarchical Sun-Jupiter-Moon',
+    prompt: 'Simulate a hierarchical solar system with a massive central star, a gas giant, and a tiny moon.'
   },
   {
-    icon: '🌠',
-    title: 'Hyperbolic Slingshot Flyby',
-    prompt: 'Simulate a high-velocity rogue body plunging past a central binary system on a hyperbolic trajectory.'
+    icon: '🚀',
+    title: 'Hyperbolic Slingshot Ejection',
+    prompt: 'Create a binary star system visited by a high-velocity hyperbolic interloper ejected via gravitational slingshot.'
   },
   {
-    icon: '🌀',
-    title: 'Lagrange L4 Trojan Triad',
-    prompt: 'Create a massive star and companion with a lightweight asteroid librating near the 60 degree L4 Lagrange point.'
+    icon: '🛡️',
+    title: 'Lagrange L4 Trojan Orbit',
+    prompt: 'Place a light trojan asteroid in a stable triangular Lagrange L4 orbit ahead of a secondary star.'
   },
   {
-    icon: '☄️',
-    title: 'Tidal Disruption Ejection',
-    prompt: 'Model an unstable close encounter between three massive stars resulting in the violent ejection of body 3.'
+    icon: '🌊',
+    title: 'Tidal Disruption System',
+    prompt: 'Simulate extreme tidal disruption forces during a close three-body encounter.'
   },
   {
-    icon: '⚖️',
-    title: 'Collinear Euler Instability',
+    icon: '📏',
+    title: 'Euler Collinear Alignment',
     prompt: 'Set up an unstable Euler collinear triple alignment with a 1e-8 quantum perturbation.'
   }
 ];
@@ -75,6 +75,12 @@ export const CopilotDrawer: React.FC<CopilotDrawerProps> = ({
   const [prompt, setPrompt] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activePayload, setActivePayload] = useState<CopilotResponsePayload | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      warmupCopilotBackend();
+    }
+  }, [isOpen]);
 
   const handleRunCopilot = async (selectedPrompt?: string) => {
     const query = selectedPrompt || prompt;
