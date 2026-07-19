@@ -28,15 +28,84 @@ As time ticks forward, both universes initially overlap perfectly before reachin
 
 ## 🛠️ Architecture & Tech Stack
 
-- **Agentic AI Backend:** Python 3.10+, FastAPI, REST API, Uvicorn, Docker
-- **LLM Tool Orchestrator:** NVIDIA Nemotron (`nvidia/nemotron-3-nano-30b-a3b`) via OpenAI API format
+- **Agentic AI Backend:** Python 3.10+, FastAPI, REST API, Uvicorn, Docker, Pytest
+- **LLM Tool Orchestrator:** NVIDIA API (`z-ai/glm-5.2` / `nvidia/nemotron-3-nano-30b-a3b`)
 - **Frontend Framework:** Next.js 14 (App Router) & TypeScript
 - **3D Graphics Engine:** Three.js using React Three Fiber (`@react-three/fiber`) & `@react-three/drei`
 - **High-Performance Physics Core:** Rust compiled to WebAssembly via `wasm-pack`
 - **Numerical Integrator:** 4th-Order Runge-Kutta (RK4) Solver with softening parameter $\epsilon^2$
 - **Styling & UI:** Tailwind CSS (Glassmorphic Dark Theme) & Lucide Icons
 - **Real-Time Analytics:** Recharts (Euclidean Distance Divergence Chart)
-- **Deployment:** Dockerized Python Backend & Static Client on GitHub Pages via CI/CD Workflow
+- **Deployment:** Dockerized Python Backend published to GHCR & Static Client on GitHub Pages via CI/CD Workflows
+
+---
+
+## 🏗️ Agentic Backend Architecture & MCP Tool Suite
+
+```mermaid
+graph TD
+    subgraph Client ["Next.js 14 Frontend UI (http://localhost:3000)"]
+        PromptInput["User Prompt / 8 Preset Chips"] --> ClientAPI["copilotClient.ts"]
+        ClientAPI -->|Inject Orbit| Canvas3D["Three.js / WebAssembly 3D Sandbox"]
+    end
+
+    subgraph Backend ["Python FastAPI Microservice (http://localhost:8000)"]
+        ClientAPI -->|POST /api/copilot/generate| FastAPIServer["FastAPI Gateway (main.py)"]
+        FastAPIServer --> Agent["CelestialCopilotAgent (agent.py)"]
+        
+        subgraph ToolSuite ["Python MCP Tool Suite (tools.py)"]
+            T1["🔧 parse_astronomical_intent()"]
+            T2["🔧 synthesize_state_vectors()"]
+            T3["🔧 normalize_center_of_mass()"]
+            T4["🔧 compute_physics_diagnostics()"]
+        end
+        
+        Agent --> T1
+        Agent --> T2
+        T2 -->|Position & Velocity Vectors| T3
+        T3 -->|Shift COM to (0,0,0) & Momentum P=0| T4
+        T4 -->|Energy E=T+V, Angular Momentum |L|, Chaos Horizon| Agent
+
+        subgraph ExternalLLM ["NVIDIA API Platform"]
+            LLMModel["NVIDIA LLM (z-ai/glm-5.2)"]
+        end
+
+        Agent -->|OpenAI SDK API Call| LLMModel
+        LLMModel -->|Astrophysicist Reasoning Report| Agent
+    end
+
+    Agent -->|Structured CopilotResponse Payload| ClientAPI
+```
+
+---
+
+## 🐳 Docker Container & GitHub Container Registry (GHCR)
+
+The Python FastAPI backend is containerized and automatically compiled, tested, and published to **GitHub Container Registry (GHCR)** using GitHub Actions (`.github/workflows/docker-ghcr.yml`).
+
+### Pull & Run Container from GHCR
+
+```bash
+# 1. Pull latest container image from GHCR
+docker pull ghcr.io/pranjalya/astrachaos-3d-backend:latest
+
+# 2. Launch container exposing port 8000
+docker run -d \
+  -p 8000:8000 \
+  -e NVIDIA_API_KEY="your_nvidia_api_key_here" \
+  --name astrachaos-backend \
+  ghcr.io/pranjalya/astrachaos-3d-backend:latest
+```
+
+### Local Docker Build
+
+```bash
+# Build and run locally
+cd backend
+docker build -t astrachaos-3d-backend .
+docker run -p 8000:8000 -e NVIDIA_API_KEY="your_nvidia_api_key_here" astrachaos-3d-backend
+```
+
 
 ---
 
