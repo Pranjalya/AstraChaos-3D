@@ -50,6 +50,72 @@ As time ticks forward, both universes initially overlap perfectly before reachin
 
 ---
 
+## 📚 Academic Citations & References
+
+If you use **AstraChaos 3D** for academic research, education, or visual physics demonstrations, please cite the foundational literature on deterministic celestial chaos and periodic 3-body choreography:
+
+### Foundational Papers
+
+1. **Poincaré, H. (1890).** *Sur le problème des trois corps et les équations de la dynamique.* Acta Mathematica, 13(1), 1–270. [DOI: 10.1007/BF02392506](https://doi.org/10.1007/BF02392506)
+   - *Landmark paper demonstrating non-integrability and sensitive dependence on initial conditions in 3-body gravitational systems.*
+
+2. **Lorenz, E. N. (1963).** *Deterministic Nonperiodic Flow.* Journal of the Atmospheric Sciences, 20(2), 130–141. [DOI: 10.1175/1520-0469(1963)020<0130:DNF>2.0.CO;2](https://doi.org/10.1175/1520-0469(1963)020%3C0130:DNF%3E2.0.CO;2)
+   - *Formulated the mathematical foundation of the "Butterfly Effect" (exponential Lyapunov divergence).*
+
+3. **Chenciner, A., & Montgomery, R. (2000).** *A remarkable periodic solution of the three-body problem in the case of equal masses.* Annals of Mathematics, 152(3), 881–901. [DOI: 10.2307/2661357](https://doi.org/10.2307/2661357)
+   - *Mathematical proof and discovery of the 3D Figure-Eight periodic orbit implemented in our Presets Vault.*
+
+4. **Szebehely, V., & Peters, C. F. (1967).** *Complete Solution of the Pythagorean Problem of Three Bodies.* Astronomical Journal, 72, 876–883. [DOI: 10.1086/110355](https://doi.org/10.1086/110355)
+   - *Numerical integration and gravitational scattering analysis of Burrau's 3:4:5 Pythagorean 3-body system.*
+
+---
+
+### BibTeX
+
+```bibtex
+@article{poincare1890probleme,
+  author    = {Poincar{\'e}, Henri},
+  title     = {Sur le probl{\`e}me des trois corps et les {\'e}quations de la dynamique},
+  journal   = {Acta Mathematica},
+  volume    = {13},
+  number    = {1},
+  pages     = {1--270},
+  year      = {1890},
+  publisher = {Springer}
+}
+
+@article{lorenz1963deterministic,
+  author    = {Lorenz, Edward N.},
+  title     = {Deterministic Nonperiodic Flow},
+  journal   = {Journal of the Atmospheric Sciences},
+  volume    = {20},
+  number    = {2},
+  pages     = {130--141},
+  year      = {1963}
+}
+
+@article{chenciner2000remarkable,
+  author    = {Chenciner, Alain and Montgomery, Richard},
+  title     = {A remarkable periodic solution of the three-body problem in the case of equal masses},
+  journal   = {Annals of Mathematics},
+  volume    = {152},
+  number    = {3},
+  pages     = {881--901},
+  year      = {2000}
+}
+
+@misc{tiwari2026astrachaos,
+  author    = {Tiwari, Pranjalya},
+  title     = {AstraChaos 3D: High-Performance Interactive 3D Three-Body Problem \& Butterfly Effect Sandbox},
+  year      = {2026},
+  publisher = {GitHub},
+  journal   = {GitHub Repository},
+  howpublished = {\url{https://github.com/Pranjalya/AstraChaos-3D}}
+}
+```
+
+---
+
 ## ⚙️ Local Installation & Setup
 
 ### Prerequisites
