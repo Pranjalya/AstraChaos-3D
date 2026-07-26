@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Cpu, Zap, Activity, AlertTriangle, BookOpen, Github, User, Compass, Bot } from 'lucide-react';
+import { Cpu, Zap, Activity, AlertTriangle, BookOpen, Github, User, Compass, Bot, Rocket } from 'lucide-react';
 import { warmupCopilotBackend } from '@/utils/copilotClient';
 
 interface HeaderProps {
@@ -12,6 +12,8 @@ interface HeaderProps {
   onOpenGuide: () => void;
   onStartTour: () => void;
   onOpenCopilot: () => void;
+  onToggleSlingshot?: () => void;
+  isSlingshotOpen?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -22,6 +24,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenGuide,
   onStartTour,
   onOpenCopilot,
+  onToggleSlingshot,
+  isSlingshotOpen,
 }) => {
   const isDivergent = divergence > 0.5;
 
@@ -51,6 +55,22 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Buttons & Badges */}
       <div className="flex items-center gap-1.5 sm:gap-3 font-mono text-xs">
+        {/* RL Spacecraft Slingshot Button */}
+        {onToggleSlingshot && (
+          <button
+            onClick={onToggleSlingshot}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white font-bold text-xs transition-all shadow-lg ${
+              isSlingshotOpen
+                ? 'bg-orange-500 shadow-orange-500/40 ring-2 ring-orange-300'
+                : 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 shadow-orange-500/25'
+            }`}
+            title="Toggle RL Spacecraft Slingshot & Delta-V Optimizer"
+          >
+            <Rocket className="w-4 h-4 text-yellow-200" />
+            <span className="font-sans font-bold hidden sm:inline">RL Slingshot</span>
+          </button>
+        )}
+
         {/* Agentic AI Copilot Button */}
         <button
           onMouseEnter={warmupCopilotBackend}
@@ -58,12 +78,13 @@ export const Header: React.FC<HeaderProps> = ({
             warmupCopilotBackend();
             onOpenCopilot();
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-pink-500 text-white font-bold text-xs hover:opacity-90 transition-all shadow-lg shadow-cyan-500/25 animate-pulse"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-pink-500 text-white font-bold text-xs hover:opacity-90 transition-all shadow-lg shadow-cyan-500/25"
           title="Open Agentic AI Celestial Copilot"
         >
           <Bot className="w-4 h-4 text-cyan-200" />
           <span className="font-sans font-bold">AI Copilot</span>
         </button>
+
 
 
         {/* Onboarding Tour Button */}

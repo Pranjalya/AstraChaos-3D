@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { CameraTargetMode, DivergencePoint, Vector3D, CopilotResponsePayload } from '@/types/physics';
+import { CameraTargetMode, DivergencePoint, Vector3D, CopilotResponsePayload, SlingshotPlan } from '@/types/physics';
 import { PRESETS } from '@/utils/presets';
 import { Header } from '@/components/ui/Header';
 import { ControlPanel } from '@/components/ui/ControlPanel';
@@ -10,6 +10,7 @@ import { AnalyticsDrawer } from '@/components/ui/AnalyticsDrawer';
 import { GuideModal } from '@/components/ui/GuideModal';
 import { TourOverlay } from '@/components/ui/TourOverlay';
 import { CopilotDrawer } from '@/components/ui/CopilotDrawer';
+import { SlingshotPanel } from '@/components/controls/SlingshotPanel';
 
 // Dynamically import Canvas to bypass SSR issues with WebGL/Three.js
 const SimulationCanvas = dynamic(
@@ -32,6 +33,12 @@ export default function Home() {
   const [sizeScale, setSizeScale] = useState<number>(1.0);
   const [bodyColors, setBodyColors] = useState<[string, string, string]>(['#ffaa00', '#00f3ff', '#ff007f']);
   const [resetTrigger, setResetTrigger] = useState<number>(0);
+
+  // Probe & Slingshot State
+  const [probePlan, setProbePlan] = useState<SlingshotPlan | null>(null);
+  const [isSlingshotOpen, setIsSlingshotOpen] = useState<boolean>(false);
+  const onApplyImpulseRef = React.useRef<((dvX: number, dvY: number, dvZ: number) => void) | null>(null);
+  const onClearProbeRef = React.useRef<(() => void) | null>(null);
 
   // Initial Vectors State
   const defaultPreset = PRESETS.figureEight;
@@ -79,6 +86,8 @@ export default function Home() {
     if (preset.bodyColors) {
       setBodyColors([...preset.bodyColors]);
     }
+    setProbePlan(null);
+    if (onClearProbeRef.current) onClearProbeRef.current();
     setMetricsHistory([]);
     setElapsedTime(0);
     setResetTrigger((prev) => prev + 1);
@@ -109,6 +118,8 @@ export default function Home() {
     setPerturbation(payload.recommended_perturbation || 1e-7);
     setDt(payload.recommended_dt || 0.008);
     setSubSteps(payload.recommended_sub_steps || 20);
+    setProbePlan(null);
+    if (onClearProbeRef.current) onClearProbeRef.current();
     setMetricsHistory([]);
     setElapsedTime(0);
     setResetTrigger((prev) => prev + 1);
@@ -118,6 +129,8 @@ export default function Home() {
   const handleReset = () => {
     setMetricsHistory([]);
     setElapsedTime(0);
+    if (onClearProbeRef.current) onClearProbeRef.current();
+    setProbePlan(null);
     setResetTrigger((prev) => prev + 1);
   };
 
@@ -223,6 +236,9 @@ export default function Home() {
         customVelA={velA}
         onMetricsUpdate={handleMetricsUpdate}
         resetTrigger={resetTrigger}
+        probePlan={probePlan}
+        onApplyImpulseRef={onApplyImpulseRef}
+        onClearProbeRef={onClearProbeRef}
       />
 
       {/* Floating Header UI */}
@@ -234,7 +250,35 @@ export default function Home() {
         onOpenGuide={() => setIsGuideOpen(true)}
         onStartTour={() => setIsTourOpen(true)}
         onOpenCopilot={() => setIsCopilotOpen(true)}
+        onToggleSlingshot={() => setIsSlingshotOpen(!isSlingshotOpen)}
+        isSlingshotOpen={isSlingshotOpen}
       />
+
+      {/* RL Spacecraft Slingshot Floating Widget */}
+      {isSlingshotOpen && (
+        <div className="absolute top-20 right-4 z-30 w-80 sm:w-96 pointer-events-auto transition-all animate-in fade-in slide-in-from-top-4">
+          <SlingshotPanel
+            onLaunchProbe={(plan) => setProbePlan(plan)}
+            onApplyImpulse={(dvX, dvY, dvZ) => {
+              if (onApplyImpulseRef.current) {
+                onApplyImpulseRef.current(dvX, dvY, dvZ);
+              }
+            }}
+            onClearProbe={() => {
+              if (onClearProbeRef.current) {
+                onClearProbeRef.current();
+              }
+              setProbePlan(null);
+            }}
+            isProbeActive={probePlan !== null}
+            currentMasses={masses}
+            currentPosA={posA}
+            currentVelA={velA}
+            bodyColors={bodyColors}
+          />
+        </div>
+      )}
+
 
       {/* Control Panel Sidebar */}
       <ControlPanel

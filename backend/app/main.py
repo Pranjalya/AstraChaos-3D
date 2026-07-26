@@ -3,9 +3,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from app.schemas import CopilotRequest, CopilotResponse, PhysicsDiagnostics
+from app.schemas import CopilotRequest, CopilotResponse, PhysicsDiagnostics, SlingshotPlanRequest, SlingshotPlanResponse
 from app.agent import CelestialCopilotAgent
-from app.tools import compute_physics_diagnostics
+from app.tools import compute_physics_diagnostics, plan_slingshot_trajectory_tool
 
 load_dotenv()
 
@@ -64,7 +64,49 @@ def evaluate_diagnostics(payload: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Diagnostics calculation failed: {str(e)}")
 
+@app.post("/api/copilot/slingshot", response_model=SlingshotPlanResponse)
+def compute_slingshot_plan(request: SlingshotPlanRequest):
+    try:
+        masses = request.custom_masses or [1.0, 1.0, 1.0]
+        if request.custom_pos_a and request.custom_vel_a:
+            pos_a = request.custom_pos_a
+            vel_a = request.custom_vel_a
+        else:
+            # Fallback default figure-eight orbit positions
+            pos_a = [
+                {"x": -0.97000436, "y": 0.24308753, "z": 0.0},
+                {"x": 0.97000436, "y": -0.24308753, "z": 0.0},
+                {"x": 0.0, "y": 0.0, "z": 0.0}
+            ]
+            vel_a = [
+                {"x": 0.46620531, "y": 0.43236573, "z": 0.0},
+                {"x": 0.46620531, "y": 0.43236573, "z": 0.0},
+                {"x": -0.93241062, "y": -0.86473146, "z": 0.0}
+            ]
+        
+        from app.schemas import Vector3D
+        pos_vecs = [p if isinstance(p, Vector3D) else Vector3D(**p) for p in pos_a]
+        vel_vecs = [v if isinstance(v, Vector3D) else Vector3D(**v) for v in vel_a]
+
+        plan_data = plan_slingshot_trajectory_tool(
+            masses=masses,
+            pos_a=pos_vecs,
+            vel_a=vel_vecs,
+            target_body_idx=request.target_body_index,
+            max_delta_v=request.max_delta_v
+        )
+        return SlingshotPlanResponse(
+            success=True,
+            **plan_data
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Slingshot trajectory planning failed: {str(e)}")
+
+
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+

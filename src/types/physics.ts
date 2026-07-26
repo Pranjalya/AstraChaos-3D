@@ -67,3 +67,26 @@ export interface CopilotResponsePayload {
   tool_logs: ToolCallLog[];
 }
 
+export interface BurnEvent {
+  time: number;
+  delta_v: Vector3D;
+  fuel_used: number;
+  description: string;
+}
+
+export interface SlingshotPlan {
+  success: boolean;
+  target_body_index: number;
+  probe_start_pos: Vector3D;
+  probe_start_vel: Vector3D;
+  burn_events: BurnEvent[];
+  total_delta_v_used: number;
+  max_delta_v_budget: number;
+  kinetic_energy_gained: number;
+  fuel_saved_percentage: number;
+  trajectory_points: Vector3D[];
+  summary_report: string;
+  tool_logs: ToolCallLog[];
+}
+
+

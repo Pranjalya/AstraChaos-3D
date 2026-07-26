@@ -349,3 +349,45 @@ def synthesize_orbital_topology(
         "diagnostics": diagnostics,
         "tool_logs": tool_logs
     }
+
+
+def plan_slingshot_trajectory_tool(
+    masses: List[float],
+    pos_a: List[Vector3D],
+    vel_a: List[Vector3D],
+    target_body_idx: int = 1,
+    max_delta_v: float = 1.5
+) -> Dict[str, Any]:
+    """
+    Executes RL & Trajectory Optimization for a 4th-body spacecraft probe.
+    Returns optimal initial probe insertion state, impulse burn events, and gravity assist stats.
+    """
+    from app.rl_optimizer import SpacecraftSlingshotOptimizer
+
+    optimizer = SpacecraftSlingshotOptimizer(masses, pos_a, vel_a)
+    plan_data = optimizer.optimize(target_body_idx=target_body_idx, max_delta_v=max_delta_v)
+
+    tool_logs = [
+        ToolCallLog(
+            tool_name="rl_environment_rollout",
+            status="SUCCESS",
+            description="Evaluated N-body 3D gravitational state space for 4th-body probe launch",
+            result_summary=f"Sampled launch trajectories around Body 1 with target Body {target_body_idx + 1}"
+        ),
+        ToolCallLog(
+            tool_name="optimize_gravity_assist",
+            status="SUCCESS",
+            description="Calculated flyby trajectory corridor to maximize kinetic energy boost",
+            result_summary=f"Energy gained: +{plan_data['kinetic_energy_gained']} J/kg | Fuel saved: {plan_data['fuel_saved_percentage']}%"
+        ),
+        ToolCallLog(
+            tool_name="synthesize_burn_schedule",
+            status="SUCCESS",
+            description="Formulated impulse burn events (Delta-V vectors) within fuel allowance budget",
+            result_summary=f"Total Delta-V consumed: {plan_data['total_delta_v_used']} / {max_delta_v} max fuel units"
+        )
+    ]
+
+    plan_data["tool_logs"] = tool_logs
+    return plan_data
+

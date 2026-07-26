@@ -5,11 +5,12 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import * as THREE from 'three';
-import { CameraTargetMode, DivergencePoint, Vector3D } from '@/types/physics';
+import { CameraTargetMode, DivergencePoint, SlingshotPlan, Vector3D } from '@/types/physics';
 import { PhysicsSolver, createPhysicsEngine } from '@/utils/wasmBridge';
 import { PRESETS } from '@/utils/presets';
 import { Bodies } from './Bodies';
 import { Trails } from './Trails';
+import { Probe3D } from './Probe3D';
 import { CameraController } from './CameraController';
 
 interface SimulationCanvasProps {
@@ -29,6 +30,9 @@ interface SimulationCanvasProps {
   customVelA: [Vector3D, Vector3D, Vector3D];
   onMetricsUpdate: (point: DivergencePoint, currentFps: number, isWasm: boolean, elapsedTime: number) => void;
   resetTrigger: number;
+  probePlan?: SlingshotPlan | null;
+  onApplyImpulseRef?: React.MutableRefObject<((dvX: number, dvY: number, dvZ: number) => void) | null>;
+  onClearProbeRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 const SimulationLoop: React.FC<SimulationCanvasProps & { controlsRef: React.RefObject<OrbitControlsImpl | null> }> = ({
@@ -48,11 +52,21 @@ const SimulationLoop: React.FC<SimulationCanvasProps & { controlsRef: React.RefO
   customVelA,
   onMetricsUpdate,
   resetTrigger,
+  probePlan,
+  onApplyImpulseRef,
+  onClearProbeRef,
   controlsRef,
 }) => {
   const solverRef = useRef<PhysicsSolver | null>(null);
   const [posA, setPosA] = useState<Float32Array>(new Float32Array(9));
   const [posB, setPosB] = useState<Float32Array>(new Float32Array(9));
+
+  // Probe State
+  const [probePos, setProbePos] = useState<THREE.Vector3>(new THREE.Vector3());
+  const [probeVel, setProbeVel] = useState<THREE.Vector3>(new THREE.Vector3());
+  const [isProbeActive, setIsProbeActive] = useState<boolean>(false);
+  const probeHistoryRef = useRef<THREE.Vector3[]>([]);
+  const [probeHistory, setProbeHistory] = useState<THREE.Vector3[]>([]);
 
   const historyARef = useRef<THREE.Vector3[][]>([[], [], []]);
   const historyBRef = useRef<THREE.Vector3[][]>([[], [], []]);
@@ -62,6 +76,41 @@ const SimulationLoop: React.FC<SimulationCanvasProps & { controlsRef: React.RefO
   const frameCounter = useRef(0);
   const lastTime = useRef(performance.now());
   const fpsRef = useRef(60);
+
+  // Attach impulse & clear handlers
+  useEffect(() => {
+    if (onApplyImpulseRef) {
+      onApplyImpulseRef.current = (dvX, dvY, dvZ) => {
+        if (solverRef.current && solverRef.current.applyProbeImpulse) {
+          solverRef.current.applyProbeImpulse(dvX, dvY, dvZ);
+        }
+      };
+    }
+    if (onClearProbeRef) {
+      onClearProbeRef.current = () => {
+        if (solverRef.current && solverRef.current.setProbe) {
+          solverRef.current.setProbe([0, 0, 0], [0, 0, 0], false);
+        }
+        setIsProbeActive(false);
+        probeHistoryRef.current = [];
+        setProbeHistory([]);
+      };
+    }
+  }, [onApplyImpulseRef, onClearProbeRef]);
+
+  // Handle new Slingshot Probe Launch
+  useEffect(() => {
+    if (probePlan && solverRef.current && solverRef.current.setProbe) {
+      const p = probePlan.probe_start_pos;
+      const v = probePlan.probe_start_vel;
+      solverRef.current.setProbe([p.x, p.y, p.z], [v.x, v.y, v.z], true);
+      setIsProbeActive(true);
+      setProbePos(new THREE.Vector3(p.x, p.y, p.z));
+      setProbeVel(new THREE.Vector3(v.x, v.y, v.z));
+      probeHistoryRef.current = [];
+      setProbeHistory([]);
+    }
+  }, [probePlan]);
 
   // Initialize or Reset Physics Engine with custom initial position/velocity vectors
   useEffect(() => {
@@ -89,6 +138,13 @@ const SimulationLoop: React.FC<SimulationCanvasProps & { controlsRef: React.RefO
       historyBRef.current = [[], [], []];
       setHistoryA([[], [], []]);
       setHistoryB([[], [], []]);
+
+      if (probePlan && solver.setProbe) {
+        const p = probePlan.probe_start_pos;
+        const v = probePlan.probe_start_vel;
+        solver.setProbe([p.x, p.y, p.z], [v.x, v.y, v.z], true);
+        setIsProbeActive(true);
+      }
     });
 
     return () => {
@@ -113,6 +169,24 @@ const SimulationLoop: React.FC<SimulationCanvasProps & { controlsRef: React.RefO
     const newB = solverRef.current.getPositionsB();
     setPosA(newA);
     setPosB(newB);
+
+    // Probe state tracking
+    if (solverRef.current.isProbeActive && solverRef.current.isProbeActive()) {
+      if (solverRef.current.getProbePosition && solverRef.current.getProbeVelocity) {
+        const pArray = solverRef.current.getProbePosition();
+        const vArray = solverRef.current.getProbeVelocity();
+        const pVec = new THREE.Vector3(pArray[0], pArray[1], pArray[2]);
+        const vVec = new THREE.Vector3(vArray[0], vArray[1], vArray[2]);
+        setProbePos(pVec);
+        setProbeVel(vVec);
+
+        probeHistoryRef.current.push(pVec);
+        if (probeHistoryRef.current.length > trailLength * 2) {
+          probeHistoryRef.current.shift();
+        }
+        setProbeHistory([...probeHistoryRef.current]);
+      }
+    }
 
     // Update history trail points
     for (let b = 0; b < 3; b++) {
@@ -159,6 +233,13 @@ const SimulationLoop: React.FC<SimulationCanvasProps & { controlsRef: React.RefO
       <CameraController mode={cameraMode} posA={posA} controlsRef={controlsRef} />
       <Bodies posA={posA} posB={posB} masses={masses} bodyColors={bodyColors} sizeScale={sizeScale} showA={showA} showB={showB} />
       <Trails historyA={historyA} historyB={historyB} bodyColors={bodyColors} showA={showA} showB={showB} maxPoints={trailLength} />
+      <Probe3D
+        position={probePos}
+        velocity={probeVel}
+        active={isProbeActive}
+        plannedTrajectory={probePlan?.trajectory_points || []}
+        probeHistory={probeHistory}
+      />
     </>
   );
 };
@@ -185,3 +266,4 @@ export const SimulationCanvas: React.FC<SimulationCanvasProps> = (props) => {
     </div>
   );
 };
+

@@ -9,6 +9,11 @@ export interface PhysicsSolver {
   getElapsedTime(): number;
   setMasses(masses: number[]): void;
   reset(masses: number[], posA: number[], velA: number[], perturbation: number): void;
+  setProbe?(pos: number[], vel: number[], active: boolean): void;
+  applyProbeImpulse?(dvX: number, dvY: number, dvZ: number): void;
+  getProbePosition?(): Float32Array;
+  getProbeVelocity?(): Float32Array;
+  isProbeActive?(): boolean;
 }
 
 class TSRK4PhysicsEngine implements PhysicsSolver {
@@ -21,6 +26,11 @@ class TSRK4PhysicsEngine implements PhysicsSolver {
   private gConst: number;
   private softeningSq: number;
   private elapsedTime: number = 0;
+
+  // Probe (4th body state)
+  private probePos: Float64Array = new Float64Array(3);
+  private probeVel: Float64Array = new Float64Array(3);
+  private probeActive: boolean = false;
 
   constructor(
     masses: number[],
@@ -52,6 +62,36 @@ class TSRK4PhysicsEngine implements PhysicsSolver {
     this.masses = [...masses];
   }
 
+  setProbe(pos: number[], vel: number[], active: boolean): void {
+    this.probePos[0] = pos[0] || 0;
+    this.probePos[1] = pos[1] || 0;
+    this.probePos[2] = pos[2] || 0;
+    this.probeVel[0] = vel[0] || 0;
+    this.probeVel[1] = vel[1] || 0;
+    this.probeVel[2] = vel[2] || 0;
+    this.probeActive = active;
+  }
+
+  applyProbeImpulse(dvX: number, dvY: number, dvZ: number): void {
+    if (this.probeActive) {
+      this.probeVel[0] += dvX;
+      this.probeVel[1] += dvY;
+      this.probeVel[2] += dvZ;
+    }
+  }
+
+  getProbePosition(): Float32Array {
+    return new Float32Array(this.probePos);
+  }
+
+  getProbeVelocity(): Float32Array {
+    return new Float32Array(this.probeVel);
+  }
+
+  isProbeActive(): boolean {
+    return this.probeActive;
+  }
+
   private computeAccelerations(pos: Float64Array, outAcc: Float64Array) {
     outAcc.fill(0);
     for (let i = 0; i < 3; i++) {
@@ -70,6 +110,25 @@ class TSRK4PhysicsEngine implements PhysicsSolver {
           outAcc[iy] += dy * factor;
           outAcc[iz] += dz * factor;
         }
+      }
+    }
+  }
+
+  private computeProbeAcceleration(bodiesPos: Float64Array, pPos: Float64Array, outAcc: Float64Array) {
+    outAcc.fill(0);
+    if (!this.probeActive) return;
+    for (let j = 0; j < 3; j++) {
+      const jx = j * 3, jy = j * 3 + 1, jz = j * 3 + 2;
+      const dx = bodiesPos[jx] - pPos[0];
+      const dy = bodiesPos[jy] - pPos[1];
+      const dz = bodiesPos[jz] - pPos[2];
+      const distSq = dx * dx + dy * dy + dz * dz + this.softeningSq;
+      const distCube = distSq * Math.sqrt(distSq);
+      if (distCube > 1e-12) {
+        const factor = (this.gConst * this.masses[j]) / distCube;
+        outAcc[0] += dx * factor;
+        outAcc[1] += dy * factor;
+        outAcc[2] += dz * factor;
       }
     }
   }
@@ -129,11 +188,27 @@ class TSRK4PhysicsEngine implements PhysicsSolver {
     }
   }
 
+  private rk4StepProbe(bodiesPos: Float64Array, dt: number) {
+    if (!this.probeActive) return;
+    const pAcc = new Float64Array(3);
+
+    // Simple RK2/Euler step for zero-mass probe for efficiency
+    this.computeProbeAcceleration(bodiesPos, this.probePos, pAcc);
+    this.probeVel[0] += pAcc[0] * dt;
+    this.probeVel[1] += pAcc[1] * dt;
+    this.probeVel[2] += pAcc[2] * dt;
+
+    this.probePos[0] += this.probeVel[0] * dt;
+    this.probePos[1] += this.probeVel[1] * dt;
+    this.probePos[2] += this.probeVel[2] * dt;
+  }
+
   step(dt: number, subSteps: number) {
     const subDt = dt / subSteps;
     for (let s = 0; s < subSteps; s++) {
       this.rk4StepState(this.posA, this.velA, subDt);
       this.rk4StepState(this.posB, this.velB, subDt);
+      this.rk4StepProbe(this.posA, subDt);
     }
     this.elapsedTime += dt;
   }
@@ -226,6 +301,39 @@ class WasmPhysicsWrapper implements PhysicsSolver {
     }
   }
 
+  setProbe(pos: number[], vel: number[], active: boolean): void {
+    if (this.engine.set_probe) {
+      this.engine.set_probe(new Float64Array(pos), new Float64Array(vel), active);
+    }
+  }
+
+  applyProbeImpulse(dvX: number, dvY: number, dvZ: number): void {
+    if (this.engine.apply_probe_impulse) {
+      this.engine.apply_probe_impulse(dvX, dvY, dvZ);
+    }
+  }
+
+  getProbePosition(): Float32Array {
+    if (this.engine.get_probe_position) {
+      return new Float32Array(this.engine.get_probe_position());
+    }
+    return new Float32Array(3);
+  }
+
+  getProbeVelocity(): Float32Array {
+    if (this.engine.get_probe_velocity) {
+      return new Float32Array(this.engine.get_probe_velocity());
+    }
+    return new Float32Array(3);
+  }
+
+  isProbeActive(): boolean {
+    if (this.engine.is_probe_active) {
+      return this.engine.is_probe_active();
+    }
+    return false;
+  }
+
   reset(masses: number[], posA: number[], velA: number[], perturbation: number): void {
     this.engine.reset(masses, posA, velA, perturbation);
   }
@@ -265,3 +373,4 @@ export async function createPhysicsEngine(
   console.log('⚡ Running TypeScript RK4 Physics Engine');
   return new TSRK4PhysicsEngine(masses, posA, velA, perturbation, gConst, softening);
 }
+

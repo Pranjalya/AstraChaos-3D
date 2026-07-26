@@ -47,10 +47,12 @@ struct BodyState {
 #[derive(Clone, Debug)]
 struct SystemState {
     bodies: [BodyState; 3],
+    probe: BodyState,
+    probe_active: bool,
 }
 
 impl SystemState {
-    fn compute_accelerations(&self, g_const: f64, softening_sq: f64) -> [Vector3; 3] {
+    fn compute_accelerations(&self, g_const: f64, softening_sq: f64) -> ([Vector3; 3], Vector3) {
         let mut acc = [Vector3::zero(); 3];
         for i in 0..3 {
             for j in 0..3 {
@@ -66,18 +68,35 @@ impl SystemState {
                 }
             }
         }
-        acc
+
+        // Acceleration of probe due to the 3 celestial bodies
+        let mut probe_acc = Vector3::zero();
+        if self.probe_active {
+            for j in 0..3 {
+                let diff = self.bodies[j].pos.sub(self.probe.pos);
+                let dist_sq = diff.norm_sq() + softening_sq;
+                let dist_cube = dist_sq * dist_sq.sqrt();
+                if dist_cube > 1e-12 {
+                    let force_mag = g_const * self.bodies[j].mass / dist_cube;
+                    probe_acc = probe_acc.add(diff.scale(force_mag));
+                }
+            }
+        }
+
+        (acc, probe_acc)
     }
 
     fn rk4_step(&mut self, dt: f64, g_const: f64, softening_sq: f64) {
         // k1
-        let acc1 = self.compute_accelerations(g_const, softening_sq);
+        let (acc1, p_acc1) = self.compute_accelerations(g_const, softening_sq);
         let mut k1_pos = [Vector3::zero(); 3];
         let mut k1_vel = [Vector3::zero(); 3];
         for i in 0..3 {
             k1_pos[i] = self.bodies[i].vel;
             k1_vel[i] = acc1[i];
         }
+        let pk1_pos = self.probe.vel;
+        let pk1_vel = p_acc1;
 
         // k2 evaluation state
         let mut s2 = self.clone();
@@ -85,13 +104,18 @@ impl SystemState {
             s2.bodies[i].pos = self.bodies[i].pos.add(k1_pos[i].scale(dt * 0.5));
             s2.bodies[i].vel = self.bodies[i].vel.add(k1_vel[i].scale(dt * 0.5));
         }
-        let acc2 = s2.compute_accelerations(g_const, softening_sq);
+        s2.probe.pos = self.probe.pos.add(pk1_pos.scale(dt * 0.5));
+        s2.probe.vel = self.probe.vel.add(pk1_vel.scale(dt * 0.5));
+
+        let (acc2, p_acc2) = s2.compute_accelerations(g_const, softening_sq);
         let mut k2_pos = [Vector3::zero(); 3];
         let mut k2_vel = [Vector3::zero(); 3];
         for i in 0..3 {
             k2_pos[i] = s2.bodies[i].vel;
             k2_vel[i] = acc2[i];
         }
+        let pk2_pos = s2.probe.vel;
+        let pk2_vel = p_acc2;
 
         // k3 evaluation state
         let mut s3 = self.clone();
@@ -99,13 +123,18 @@ impl SystemState {
             s3.bodies[i].pos = self.bodies[i].pos.add(k2_pos[i].scale(dt * 0.5));
             s3.bodies[i].vel = self.bodies[i].vel.add(k2_vel[i].scale(dt * 0.5));
         }
-        let acc3 = s3.compute_accelerations(g_const, softening_sq);
+        s3.probe.pos = self.probe.pos.add(pk2_pos.scale(dt * 0.5));
+        s3.probe.vel = self.probe.vel.add(pk2_vel.scale(dt * 0.5));
+
+        let (acc3, p_acc3) = s3.compute_accelerations(g_const, softening_sq);
         let mut k3_pos = [Vector3::zero(); 3];
         let mut k3_vel = [Vector3::zero(); 3];
         for i in 0..3 {
             k3_pos[i] = s3.bodies[i].vel;
             k3_vel[i] = acc3[i];
         }
+        let pk3_pos = s3.probe.vel;
+        let pk3_vel = p_acc3;
 
         // k4 evaluation state
         let mut s4 = self.clone();
@@ -113,15 +142,20 @@ impl SystemState {
             s4.bodies[i].pos = self.bodies[i].pos.add(k3_pos[i].scale(dt));
             s4.bodies[i].vel = self.bodies[i].vel.add(k3_vel[i].scale(dt));
         }
-        let acc4 = s4.compute_accelerations(g_const, softening_sq);
+        s4.probe.pos = self.probe.pos.add(pk3_pos.scale(dt));
+        s4.probe.vel = self.probe.vel.add(pk3_vel.scale(dt));
+
+        let (acc4, p_acc4) = s4.compute_accelerations(g_const, softening_sq);
         let mut k4_pos = [Vector3::zero(); 3];
         let mut k4_vel = [Vector3::zero(); 3];
         for i in 0..3 {
             k4_pos[i] = s4.bodies[i].vel;
             k4_vel[i] = acc4[i];
         }
+        let pk4_pos = s4.probe.vel;
+        let pk4_vel = p_acc4;
 
-        // Update state
+        // Update body state
         for i in 0..3 {
             let d_pos = k1_pos[i]
                 .add(k2_pos[i].scale(2.0))
@@ -137,6 +171,24 @@ impl SystemState {
 
             self.bodies[i].pos = self.bodies[i].pos.add(d_pos);
             self.bodies[i].vel = self.bodies[i].vel.add(d_vel);
+        }
+
+        // Update probe state if active
+        if self.probe_active {
+            let pd_pos = pk1_pos
+                .add(pk2_pos.scale(2.0))
+                .add(pk3_pos.scale(2.0))
+                .add(pk4_pos)
+                .scale(dt / 6.0);
+
+            let pd_vel = pk1_vel
+                .add(pk2_vel.scale(2.0))
+                .add(pk3_vel.scale(2.0))
+                .add(pk4_vel)
+                .scale(dt / 6.0);
+
+            self.probe.pos = self.probe.pos.add(pd_pos);
+            self.probe.vel = self.probe.vel.add(pd_vel);
         }
     }
 }
@@ -194,13 +246,26 @@ impl PhysicsEngine {
             );
         }
 
+        let default_probe = BodyState {
+            pos: Vector3::zero(),
+            vel: Vector3::zero(),
+            mass: 0.0,
+        };
+
         let mut b_b = b_a.clone();
-        // Perturb Body 0's x position by perturbation factor
         b_b[0].pos.x += perturbation;
 
         PhysicsEngine {
-            universe_a: SystemState { bodies: b_a },
-            universe_b: SystemState { bodies: b_b },
+            universe_a: SystemState {
+                bodies: b_a,
+                probe: default_probe,
+                probe_active: false,
+            },
+            universe_b: SystemState {
+                bodies: b_b,
+                probe: default_probe,
+                probe_active: false,
+            },
             g_const: if g_const > 0.0 { g_const } else { 1.0 },
             softening_sq: softening * softening,
             elapsed_time: 0.0,
@@ -215,6 +280,58 @@ impl PhysicsEngine {
                 self.universe_b.bodies[i].mass = masses[i];
             }
         }
+    }
+
+    pub fn set_probe(&mut self, pos: &[f64], vel: &[f64], active: bool) {
+        let p_pos = Vector3::new(
+            if pos.len() > 0 { pos[0] } else { 0.0 },
+            if pos.len() > 1 { pos[1] } else { 0.0 },
+            if pos.len() > 2 { pos[2] } else { 0.0 },
+        );
+        let p_vel = Vector3::new(
+            if vel.len() > 0 { vel[0] } else { 0.0 },
+            if vel.len() > 1 { vel[1] } else { 0.0 },
+            if vel.len() > 2 { vel[2] } else { 0.0 },
+        );
+
+        let probe = BodyState {
+            pos: p_pos,
+            vel: p_vel,
+            mass: 0.0,
+        };
+
+        self.universe_a.probe = probe;
+        self.universe_a.probe_active = active;
+        self.universe_b.probe = probe;
+        self.universe_b.probe_active = active;
+    }
+
+    pub fn apply_probe_impulse(&mut self, dv_x: f64, dv_y: f64, dv_z: f64) {
+        if self.universe_a.probe_active {
+            let dv = Vector3::new(dv_x, dv_y, dv_z);
+            self.universe_a.probe.vel = self.universe_a.probe.vel.add(dv);
+            self.universe_b.probe.vel = self.universe_b.probe.vel.add(dv);
+        }
+    }
+
+    pub fn get_probe_position(&self) -> Vec<f32> {
+        vec![
+            self.universe_a.probe.pos.x as f32,
+            self.universe_a.probe.pos.y as f32,
+            self.universe_a.probe.pos.z as f32,
+        ]
+    }
+
+    pub fn get_probe_velocity(&self) -> Vec<f32> {
+        vec![
+            self.universe_a.probe.vel.x as f32,
+            self.universe_a.probe.vel.y as f32,
+            self.universe_a.probe.vel.z as f32,
+        ]
+    }
+
+    pub fn is_probe_active(&self) -> bool {
+        self.universe_a.probe_active
     }
 
     pub fn step(&mut self, dt: f64, steps_per_frame: usize) {
@@ -306,3 +423,4 @@ impl PhysicsEngine {
         self.step_count = 0;
     }
 }
+
