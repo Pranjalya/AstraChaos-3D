@@ -49,6 +49,7 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_BASE_PATH: "/AstraChaos-3D"
+          NEXT_PUBLIC_BACKEND_URL: "https://astrachaos-3d-backend-latest.onrender.com"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
