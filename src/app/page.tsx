@@ -10,6 +10,7 @@ import { AnalyticsDrawer } from '@/components/ui/AnalyticsDrawer';
 import { GuideModal } from '@/components/ui/GuideModal';
 import { TourOverlay } from '@/components/ui/TourOverlay';
 import { CopilotDrawer } from '@/components/ui/CopilotDrawer';
+import { InverseOptimizerDrawer } from '@/components/ui/InverseOptimizerDrawer';
 
 // Dynamically import Canvas to bypass SSR issues with WebGL/Three.js
 const SimulationCanvas = dynamic(
@@ -50,6 +51,8 @@ export default function Home() {
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState<boolean>(false);
+  const [isInverseOptimizerOpen, setIsInverseOptimizerOpen] = useState<boolean>(false);
+
 
   // Telemetry Metrics
   const [fps, setFps] = useState<number>(60);
@@ -234,6 +237,7 @@ export default function Home() {
         onOpenGuide={() => setIsGuideOpen(true)}
         onStartTour={() => setIsTourOpen(true)}
         onOpenCopilot={() => setIsCopilotOpen(true)}
+        onOpenInverseOptimizer={() => setIsInverseOptimizerOpen(true)}
       />
 
       {/* Control Panel Sidebar */}
@@ -285,6 +289,13 @@ export default function Home() {
         onApplyCopilotPayload={handleApplyCopilotPayload}
       />
 
+      {/* Target-Driven Inverse Physics AI Optimizer Drawer */}
+      <InverseOptimizerDrawer
+        isOpen={isInverseOptimizerOpen}
+        onClose={() => setIsInverseOptimizerOpen(false)}
+        onApplyCopilotPayload={handleApplyCopilotPayload}
+      />
+
       {/* Interactive Physics & Chaos Educational Modal */}
       <GuideModal
         isOpen={isGuideOpen}
@@ -299,3 +310,4 @@ export default function Home() {
     </main>
   );
 }
+

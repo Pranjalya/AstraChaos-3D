@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Cpu, Zap, Activity, AlertTriangle, BookOpen, Github, User, Compass, Bot } from 'lucide-react';
+import { Cpu, Zap, Activity, AlertTriangle, BookOpen, Github, User, Compass, Bot, Target } from 'lucide-react';
 import { warmupCopilotBackend } from '@/utils/copilotClient';
 
 interface HeaderProps {
@@ -12,6 +12,7 @@ interface HeaderProps {
   onOpenGuide: () => void;
   onStartTour: () => void;
   onOpenCopilot: () => void;
+  onOpenInverseOptimizer: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -22,6 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenGuide,
   onStartTour,
   onOpenCopilot,
+  onOpenInverseOptimizer,
 }) => {
   const isDivergent = divergence > 0.5;
 
@@ -51,6 +53,20 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Buttons & Badges */}
       <div className="flex items-center gap-1.5 sm:gap-3 font-mono text-xs">
+        {/* Inverse Physics Optimizer Button */}
+        <button
+          onMouseEnter={warmupCopilotBackend}
+          onClick={() => {
+            warmupCopilotBackend();
+            onOpenInverseOptimizer();
+          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-purple-500/20 border border-cyan-400/50 text-cyan-300 font-bold text-xs hover:border-cyan-300 hover:text-white transition-all shadow-lg shadow-cyan-500/10"
+          title="Open Target-Driven Inverse Physics AI Agent"
+        >
+          <Target className="w-4 h-4 text-cyan-400 animate-spin-slow" />
+          <span className="font-sans font-bold">Inverse AI</span>
+        </button>
+
         {/* Agentic AI Copilot Button */}
         <button
           onMouseEnter={warmupCopilotBackend}
@@ -64,6 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
           <Bot className="w-4 h-4 text-cyan-200" />
           <span className="font-sans font-bold">AI Copilot</span>
         </button>
+
 
 
         {/* Onboarding Tour Button */}

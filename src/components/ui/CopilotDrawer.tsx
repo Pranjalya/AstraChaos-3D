@@ -12,7 +12,9 @@ import {
   X, 
   CheckCircle2, 
   AlertCircle,
-  Play
+  Play,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { fetchCopilotOrbit, warmupCopilotBackend } from '@/utils/copilotClient';
 import { CopilotResponsePayload } from '@/types/physics';
@@ -21,6 +23,7 @@ interface CopilotDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyCopilotPayload: (payload: CopilotResponsePayload) => void;
+  onOpenInverseOptimizer?: () => void;
 }
 
 const PROMPT_SUGGESTIONS = [
@@ -60,7 +63,7 @@ const PROMPT_SUGGESTIONS = [
     prompt: 'Simulate extreme tidal disruption forces during a close three-body encounter.'
   },
   {
-    icon: '📏',
+    icon: '⚖️',
     title: 'Euler Collinear Alignment',
     prompt: 'Set up an unstable Euler collinear triple alignment with a 1e-8 quantum perturbation.'
   }
@@ -75,6 +78,7 @@ export const CopilotDrawer: React.FC<CopilotDrawerProps> = ({
   const [prompt, setPrompt] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activePayload, setActivePayload] = useState<CopilotResponsePayload | null>(null);
+  const [isChipsCollapsed, setIsChipsCollapsed] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -90,6 +94,8 @@ export const CopilotDrawer: React.FC<CopilotDrawerProps> = ({
       setPrompt(selectedPrompt);
     }
 
+    // Auto-collapse prompt suggestion chips section when optimization/generation starts
+    setIsChipsCollapsed(true);
     setIsLoading(true);
     try {
       const payload = await fetchCopilotOrbit(query);
@@ -180,28 +186,39 @@ export const CopilotDrawer: React.FC<CopilotDrawerProps> = ({
 
           {/* Quick Prompt Suggestions */}
           <div className="space-y-2">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
-              Suggested Prompt Chips
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              {PROMPT_SUGGESTIONS.map((chip, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleRunCopilot(chip.prompt)}
-                  className="p-2.5 bg-[#0b0f19] hover:bg-[#131b2e] border border-cyan-500/20 hover:border-cyan-400/40 rounded-xl text-left transition-all group flex flex-col justify-between"
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base">{chip.icon}</span>
-                    <span className="text-xs font-semibold text-slate-200 group-hover:text-cyan-300 transition-colors font-mono">
-                      {chip.title}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 line-clamp-2">
-                    {chip.prompt}
-                  </p>
-                </button>
-              ))}
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
+                Suggested Prompt Chips
+              </span>
+              <button
+                onClick={() => setIsChipsCollapsed(!isChipsCollapsed)}
+                className="text-xs text-slate-400 hover:text-cyan-300 flex items-center gap-1 font-mono transition-colors"
+              >
+                <span>{isChipsCollapsed ? 'Show Chips' : 'Hide Chips'}</span>
+                {isChipsCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+              </button>
             </div>
+            {!isChipsCollapsed && (
+              <div className="grid grid-cols-2 gap-2 transition-all duration-300">
+                {PROMPT_SUGGESTIONS.map((chip, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleRunCopilot(chip.prompt)}
+                    className="p-2.5 bg-[#0b0f19] hover:bg-[#131b2e] border border-cyan-500/20 hover:border-cyan-400/40 rounded-xl text-left transition-all group flex flex-col justify-between"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-base">{chip.icon}</span>
+                      <span className="text-xs font-semibold text-slate-200 group-hover:text-cyan-300 transition-colors font-mono">
+                        {chip.title}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 line-clamp-2">
+                      {chip.prompt}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Active Copilot Results & Tool Log Terminal */}

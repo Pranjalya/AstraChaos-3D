@@ -1,7 +1,7 @@
 import os
 import re
 import json
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -23,6 +23,25 @@ class CelestialCopilotAgent:
                 )
             except Exception as e:
                 print(f"[Agent Warning] OpenAI client initialization error: {e}")
+
+    def detect_inverse_goal_intent(self, prompt: str) -> Optional[str]:
+        """
+        Evaluates whether a natural language user query describes an inverse optimization goal.
+        Returns the goal_type string ('slingshot', 'ejection', 'binary_capture', 'trojan_resonance', 'triple_encounter') or 'slingshot'.
+        """
+        p = prompt.lower()
+        if any(kw in p for kw in ["slingshot", "gravity assist", "velocity boost", "speed boost", "accelerate", "fast", "boost"]):
+            return "slingshot"
+        if any(kw in p for kw in ["eject", "escape", "fly away", "unbound", "ejection", "scatter", "leave"]):
+            return "ejection"
+        if any(kw in p for kw in ["binary capture", "orbital transfer", "switch orbit", "exchange", "transfer", "orbit body 2"]):
+            return "binary_capture"
+        if any(kw in p for kw in ["trojan", "lagrange", "equilateral", "triangular", "l4", "l5", "stable", "equilibrium"]):
+            return "trojan_resonance"
+        if any(kw in p for kw in ["triple encounter", "close flyby", "non-collisional", "triple close", "encounter", "collision"]):
+            return "triple_encounter"
+        return "slingshot" # Default intelligent fallback target
+
 
     def generate_orbit(self, request: CopilotRequest) -> CopilotResponse:
         """

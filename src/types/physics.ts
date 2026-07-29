@@ -67,3 +67,26 @@ export interface CopilotResponsePayload {
   tool_logs: ToolCallLog[];
 }
 
+export interface InverseOptimizationProgressPayload {
+  type: 'progress' | 'complete';
+  generation?: number;
+  max_generations?: number;
+  progress_pct?: number;
+  best_fitness?: number;
+  goal_type?: string;
+  // If complete, contains CopilotResponsePayload fields
+  success?: boolean;
+  system_name?: string;
+  description?: string;
+  masses?: [number, number, number];
+  pos_a?: [Vector3D, Vector3D, Vector3D];
+  vel_a?: [Vector3D, Vector3D, Vector3D];
+  body_colors?: [string, string, string];
+  recommended_dt?: number;
+  recommended_sub_steps?: number;
+  recommended_perturbation?: number;
+  diagnostics?: PhysicsDiagnostics;
+  tool_logs?: ToolCallLog[];
+}
+
+

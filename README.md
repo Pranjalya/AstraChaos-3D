@@ -42,6 +42,9 @@ As time ticks forward, both universes initially overlap perfectly before reachin
 
 ## 🏗️ Agentic Backend Architecture & MCP Tool Suite
 
+<details>
+<summary>🔍 <b>View Agentic Copilot Microservice Architecture & MCP Tool Flow Diagram</b></summary>
+
 ```mermaid
 graph TD
     subgraph Client ["Next.js 14 Frontend UI (http://localhost:3000)"]
@@ -76,6 +79,49 @@ graph TD
 
     Agent -->|"Structured CopilotResponse Payload"| ClientAPI
 ```
+</details>
+
+---
+
+## 🎯 Target-Driven Generative Inverse Physics Agent Architecture
+
+The **Inverse Physics Agent** allows users to reverse-engineer chaotic initial condition state vectors $(\mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3, \mathbf{v}_1, \mathbf{v}_2, \mathbf{v}_3)$ by posing natural language target askings (e.g. *"slingshot boost"*, *"eject Body 3"*, *"binary capture"*, *"trojan equilibrium"*).
+
+The Python backend executes a **vectorized Differential Evolution algorithm (CMA-ES style)** over 18D state vector space and streams real-time Server-Sent Events (SSE) back to the Next.js UI progress bar.
+
+<details>
+<summary>🔍 <b>View Inverse Optimization Engine & SSE Stream Architecture Diagram</b></summary>
+
+```mermaid
+graph TD
+    subgraph Frontend ["Next.js 14 Frontend UI"]
+        UserAsking["User Target Asking / Suggestion Chip"] --> SSEClient["copilotClient.ts (SSE Stream Reader)"]
+        SSEClient <-->|Real-Time SSE Event Stream| ProgressDrawer["Inverse Optimizer UI Drawer (Live Progress & Fitness)"]
+        InjectOrbit["Inject 3D Orbit"] --> WebGLCanvas["Three.js / Rust WASM 3D Viewport"]
+    end
+
+    subgraph BackendMicroservice ["Python FastAPI Microservice (Render Ready)"]
+        SSEClient -->|GET /api/copilot/optimize_inverse/stream| SSEEndpoint["FastAPI SSE Endpoint (StreamingResponse)"]
+        SSEEndpoint --> AgentParser["CelestialCopilotAgent: detect_inverse_goal_intent()"]
+
+        subgraph OptimizationCore ["Vectorized NumPy Optimization Core (inverse_optimizer.py)"]
+            TargetLoss["1. Target Metric Loss Generator"]
+            BatchRK4["2. Vectorized NumPy RK4 Batch Simulator"]
+            DEEngine["3. Differential Evolution Loop (18D Parameter Search)"]
+            MomentumNorm["4. COM Shift & Momentum Cancellation P=0"]
+        end
+
+        AgentParser --> TargetLoss
+        TargetLoss --> DEEngine
+        DEEngine <--> BatchRK4
+        DEEngine -->|"Yield SSE Chunks (gen, fitness, pct)"| SSEEndpoint
+        DEEngine --> MomentumNorm
+        MomentumNorm --> LLMReport["NVIDIA LLM Astrophysics Report"]
+    end
+
+    LLMReport --> InjectOrbit
+```
+</details>
 
 ---
 
@@ -147,22 +193,142 @@ docker run -p 8000:8000 -e NVIDIA_API_KEY="your_nvidia_api_key_here" astrachaos-
 
 ---
 
-## 🚀 Key Features
+## 🚀 Key Features & Architecture Breakdown
 
-- 🤖 **Agentic Celestial Copilot & Natural Language Generator:** Synthesizes initial condition state vectors $(x,y,z,vx,vy,vz)$ and mass ratios from plain English prompts using **Python FastAPI & NVIDIA Nemotron LLM**.
-- 🔧 **MCP-Style Tool Call Execution Stream:** Displays real-time agentic tool execution logs (`parse_astronomical_intent`, `synthesize_state_vectors`, `normalize_center_of_mass`, `compute_physics_diagnostics`).
-- ⚡ **Physics Diagnostics Scorecard:** Evaluates Hamiltonian total energy $E = T + V$, angular momentum magnitude $\|\mathbf{L}\|$, chaos horizon time ($t_{\text{chaos}}$), and stability classification in real time.
-- 🚀 **One-Click Sandbox Injection:** Injects generated state vectors directly into the live WebAssembly / Three.js 3D canvas with dynamic camera lock and custom color schemes.
-- 🦋 **Dual-Timeline Overlays:** Watch Universe A (Solid Bodies & Trails) and Universe B (Wireframe Ghost Halos & Trails) move symmetrically before diverging.
-- 🎨 **Signature Per-Body Color Coding:** Each body features a unique signature color scheme across both universes, customizable via hex pickers & preset palettes.
-- ⚖️ **Mass & Size Customization:** Live body mass sliders ($m_1, m_2, m_3$) that alter gravitational warping ($F = G \frac{m_1 m_2}{r^2}$) in real-time, plus size scaling ($R_{scale}$).
-- 🎛️ **Quantum Perturbation Slider:** Scale your initial "butterfly nudge" from $10^{-3}$ down to $10^{-9}$.
-- 🎥 **Target Lock Camera Mode:** Anchor camera focus onto Body 1, 2, 3, or the system's Center of Mass with smooth frame-by-frame lerping.
-- 🏛️ **Orbital Presets Vault:** Instantly spin up Chenciner Figure-Eight, Pythagorean 3-Body (Burrau), Lagrange Horseshoe, Chaotic Triple Collision, and Euler Collinear orbits.
-- 📈 **Real-Time Divergence Analytics:** Live Recharts chart tracking Euclidean distance $\|\mathbf{r}_A - \mathbf{r}_B\|$ over time on linear and $\log_{10}$ scales.
+### 🎯 1. Target-Driven Generative Inverse Physics Agent ("Inverse Trajectory Optimizer")
+Reverse-engineers 18D initial state vectors $(\mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3, \mathbf{v}_1, \mathbf{v}_2, \mathbf{v}_3)$ from natural language askings or preset chips using **Differential Evolution & Server-Sent Events (SSE)**.
+* **Natural Language Target Asking:** Type custom target requests like *"Find an initial condition where Body 3 slingshots around Body 1 with maximum speed boost"* or *"Eject Body 3 into deep space"*.
+* **5 Signature Target Chips:** 🚀 Slingshot Boost, ☄️ Chaotic Ejection, 🌌 Binary Capture & Exchange, 🛡️ Trojan Equilibrium, and 💥 Triple Close Flyby.
+* **Real-Time Progress Streaming:** Streams per-generation optimization progress (`progress_pct`, `generation`, `best_fitness`) over HTTP/1.1 via FastAPI `StreamingResponse`.
+* **One-Click 3D Orbit Injection:** Injects momentum-balanced initial state vectors directly into the live WebGL 3D canvas.
 
-- 🚀 **Interactive Onboarding Tour & Physics Guide:** Built-in step-by-step interactive UI tour and plain-language physics guide.
-- 📱 **Fully Mobile Responsive:** Responsive layout optimized for smartphones, tablets, and desktop displays.
+<details>
+<summary>🔍 <b>View Inverse Optimization Architecture & SSE Stream Diagram</b></summary>
+
+```mermaid
+graph TD
+    A["User Target Asking / Suggestion Chip"] --> B["FastAPI SSE Endpoint (/api/copilot/optimize_inverse/stream)"]
+    B --> C["CelestialCopilotAgent: Goal Parser"]
+    C --> D["Vectorized NumPy RK4 Batch Rollout Engine"]
+    D --> E["Differential Evolution Optimizer (18D Parameter Space)"]
+    E -->|Evaluate Loss Metric| D
+    E -->|"SSE Progress Chunks (gen, fitness, pct)"| F["Next.js Inverse AI Drawer Progress Bar"]
+    E --> G["COM Momentum Normalization (P=0)"]
+    G --> H["LLM Astrophysics Diagnostic Report"]
+    H --> I["Inject 3D Orbit into WebGL / WASM Viewport"]
+```
+</details>
+
+---
+
+### 🤖 2. Agentic AI Celestial Copilot & Python MCP Tool Suite
+Synthesizes celestial system topologies and mass distributions from plain English prompts using **Python FastAPI & NVIDIA Nemotron LLM**.
+* **MCP-Style Tool Call Execution Stream:** Displays real-time tool logs (`parse_astronomical_intent`, `synthesize_state_vectors`, `normalize_center_of_mass`, `compute_physics_diagnostics`).
+* **Resilient Dual-Engine Strategy:** Connects to FastAPI microservice when online, and automatically activates an in-browser deterministic tool suite for static GitHub Pages deployments.
+
+<details>
+<summary>🔍 <b>View Agentic MCP Tool Suite Orchestration Diagram</b></summary>
+
+```mermaid
+graph TD
+    A["User Prompt / Preset Suggestion"] --> B["CelestialCopilotAgent (agent.py)"]
+    B --> C1["parse_astronomical_intent()"]
+    B --> C2["synthesize_state_vectors()"]
+    C2 --> C3["normalize_center_of_mass()"]
+    C3 --> C4["compute_physics_diagnostics()"]
+    C4 --> D["NVIDIA LLM Reasoning Engine (z-ai/glm-5.2)"]
+    D --> E["Structured CopilotResponse Payload"]
+    E --> F["Inject Orbit into Three.js Viewport"]
+```
+</details>
+
+---
+
+### 🦋 3. Dual-Universe Butterfly Effect & Quantum Perturbation Engine
+Physically demonstrates extreme sensitivity to initial conditions by running **two parallel gravitational universes** simultaneously in the 3D scene.
+* **Universe A (Control):** Follows exact initial state vectors $(\mathbf{r}_0, \mathbf{v}_0)$ rendered with solid bodies and continuous trails.
+* **Universe B (Perturbed):** Displaces Body 1's position by a microscopic fraction ($\delta = 10^{-7}$) rendered with wireframe ghost halos and trails.
+* **Quantum Perturbation Slider:** Scale initial "butterfly nudge" from $10^{-3}$ down to $10^{-9}$ to observe shift in chaos horizon time.
+
+<details>
+<summary>🔍 <b>View Parallel Universe Divergence Diagram</b></summary>
+
+```mermaid
+graph TD
+    IC["Initial State Vectors (r1, r2, r3, v1, v2, v3)"] --> UA["Universe A (Control - Solid Timeline)"]
+    IC -->|"Add Perturbation (delta = 10^-7)"| UB["Universe B (Perturbed - Ghost Timeline)"]
+    UA --> RK4A["Rust WASM RK4 Solver A"]
+    UB --> RK4B["Rust WASM RK4 Solver B"]
+    RK4A --> Scene3D["Overlaid 3D WebGL Scene"]
+    RK4B --> Scene3D
+    RK4A --> Div["Compute ||rA - rB|| Distance"]
+    RK4B --> Div
+    Div --> Chart["Real-Time Divergence Analytics Plot"]
+```
+</details>
+
+---
+
+### ⚡ 4. High-Performance Rust / WebAssembly 4th-Order Runge-Kutta (RK4) Core
+Delivers sub-millisecond numerical integration using a compiled **Rust WASM physics engine** (`wasm-pack`).
+* **Numerical Precision:** 4th-Order Runge-Kutta (RK4) integrator with gravitational softening parameter $\epsilon^2 = 0.005$ to prevent singular accelerations during close encounters.
+* **120 FPS Rendering:** Zero-allocation WASM shared memory arrays piped directly into Three.js instanced meshes and trail buffers.
+
+<details>
+<summary>🔍 <b>View Rust WASM RK4 Integration Stage Diagram</b></summary>
+
+```mermaid
+graph TD
+    State["Current System State S_n"] --> K1["k1 = f(S_n)"]
+    K1 --> K2["k2 = f(S_n + dt/2 * k1)"]
+    K2 --> K3["k3 = f(S_n + dt/2 * k2)"]
+    K3 --> K4["k4 = f(S_n + dt * k3)"]
+    K1 & K2 & K3 & K4 --> Combine["S_{n+1} = S_n + dt/6 * (k1 + 2k2 + 2k3 + k4)"]
+    Combine --> WASMPtr["Direct Shared ArrayBuffer (120 FPS)"]
+```
+</details>
+
+---
+
+### 📈 5. Real-Time Divergence Analytics & Physics Scorecard
+Evaluates real-time mechanical invariants and chaos progression.
+* **Euclidean Divergence Analytics:** Real-time Recharts plot tracking $\|\mathbf{r}_A - \mathbf{r}_B\|$ over time on linear and $\log_{10}$ logarithmic scales.
+* **Physics Diagnostics Scorecard:** Real-time calculation of Hamiltonian total energy $E = T + V$, kinetic energy $T$, potential energy $V$, total angular momentum magnitude $\|\mathbf{L}\|$, and Lyapunov chaos horizon time $t_{\text{chaos}} \approx \frac{\ln(1/\delta)}{\lambda}$.
+
+<details>
+<summary>🔍 <b>View Real-Time Telemetry & Scorecard Flow Diagram</b></summary>
+
+```mermaid
+graph TD
+    Frame["Frame Update Callback"] --> PosVel["Extract Position & Velocity Vectors"]
+    PosVel --> T["Kinetic Energy T = 0.5 * sum(m_i * v_i^2)"]
+    PosVel --> V["Potential Energy V = - sum(G * m_i * m_j / r_ij)"]
+    T & V --> E["Total Mechanical Energy E = T + V"]
+    PosVel --> L["Angular Momentum Vector |L| = |sum(m_i * (r_i x v_i))|"]
+    PosVel --> Lyapunov["Chaos Horizon Time t_chaos = ln(1/delta) / lambda"]
+    E & L & Lyapunov --> Scorecard["Physics Scorecard UI Panel"]
+```
+</details>
+
+---
+
+### 🏛️ 6. Orbital Presets Vault & Interactive Controls
+* **Presets Vault:** Instantly spin up Chenciner Figure-Eight, Pythagorean 3-Body (Burrau), Lagrange Horseshoe, Chaotic Triple Collision, and Euler Collinear orbits.
+* **Momentum Normalization:** Automatic Center of Mass shift to origin $(0,0,0)$ and system momentum cancellation ($\mathbf{P} = \sum m_i \mathbf{v}_i = \mathbf{0}$).
+* **Custom Control Suite:** Hex color pickers per body, live body mass sliders ($m_1, m_2, m_3$), size scaling ($R_{\text{scale}}$), target-lock camera tracking (Body 1, 2, 3, or COM), and collapsible drawer sections.
+
+<details>
+<summary>🔍 <b>View Center of Mass & Momentum Normalization Diagram</b></summary>
+
+```mermaid
+graph TD
+    Raw["Raw Initial State Vectors (pos, vel)"] --> PosCOM["Compute r_COM = sum(m_i * r_i) / sum(m_i)"]
+    Raw --> VelCOM["Compute v_COM = sum(m_i * v_i) / sum(m_i)"]
+    PosCOM --> ShiftPos["Shift r_i' = r_i - r_COM (COM at Origin 0,0,0)"]
+    VelCOM --> ShiftVel["Shift v_i' = v_i - v_COM (Total System Momentum P = 0)"]
+    ShiftPos & ShiftVel --> Balanced["Momentum-Balanced Orbit for 3D Viewport"]
+```
+</details>
 
 ---
 

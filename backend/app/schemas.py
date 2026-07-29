@@ -37,3 +37,17 @@ class CopilotResponse(BaseModel):
     recommended_perturbation: float = Field(default=1e-7, description="Perturbation scale")
     diagnostics: PhysicsDiagnostics
     tool_logs: List[ToolCallLog]
+
+class InverseOptimizationRequest(BaseModel):
+    goal_type: str = Field(default="slingshot", description="Target objective chip e.g. slingshot, ejection, binary_capture, trojan_resonance, triple_encounter")
+    max_generations: Optional[int] = Field(default=40, description="Max optimization generations")
+    pop_size: Optional[int] = Field(default=32, description="Population size per generation")
+
+class InverseOptimizationProgress(BaseModel):
+    type: str = Field(..., description="Progress event type: 'progress' or 'complete'")
+    generation: int
+    max_generations: int
+    progress_pct: float
+    best_fitness: float
+    goal_type: str
+
